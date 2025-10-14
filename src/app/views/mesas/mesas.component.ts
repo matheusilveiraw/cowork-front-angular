@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { CommonModule } from '@angular/common'; 
-
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 
 interface Mesa {
   idDesks: number;
@@ -20,17 +20,22 @@ interface ApiResponse {
   selector: 'app-mesas',
   templateUrl: './mesas.component.html',
   styleUrls: ['./mesas.component.scss'],
-  imports: [CommonModule], 
+  imports: [CommonModule, FormsModule],
 })
 export class MesasComponent implements OnInit {
   mesas: Mesa[] = [];
   loading: boolean = false;
+  salvando: boolean = false;
 
-  // Para os modais
   abrirModalCadastroMesa: boolean = false;
   abrirModalAluguelMesa: boolean = false;
   mesaEditando: Mesa | null = null;
   mesaSelecionadaAluguel: Mesa | null = null;
+
+  mesaFormData: any = {
+    numberDesks: null,
+    nameDesks: ''
+  };
 
   constructor(private http: HttpClient) { }
 
@@ -57,41 +62,31 @@ export class MesasComponent implements OnInit {
     }
   }
 
-  // Métodos de Status (mantenha por enquanto)
+  // Métodos de Status (fixo - todas disponíveis)
   estaDisponivel(mesa: Mesa): boolean {
-    return Math.random() > 0.3; // Simulação
+    return true; // Todas as mesas estão disponíveis
   }
 
   getStatusClass(mesa: Mesa): string {
-    return this.estaDisponivel(mesa) ? 'status-disponivel' : 'status-ocupada';
+    return 'status-disponivel'; // Sempre retorna classe de disponível
   }
 
   getStatusText(mesa: Mesa): string {
-    return this.estaDisponivel(mesa) ? 'Disponível' : 'Ocupada';
+    return 'Disponível'; // Sempre retorna texto "Disponível"
   }
 
   getProximaDisponibilidade(mesa: Mesa): string {
-    return this.estaDisponivel(mesa) ? 'Agora' : '15:00';
+    return 'Agora'; // Sempre disponível
   }
 
   getMesasDisponiveis(): number {
-    return this.mesas.filter(mesa => this.estaDisponivel(mesa)).length;
+    return this.mesas.length; // Todas estão disponíveis
   }
 
   getMesasOcupadas(): number {
-    return this.mesas.filter(mesa => !this.estaDisponivel(mesa)).length;
+    return 0; // Nenhuma ocupada
   }
 
-  // Métodos dos Modais
-  abrirModalCadastro() {
-    this.mesaEditando = null;
-    this.abrirModalCadastroMesa = true;
-  }
-
-  abrirModalEdicao(mesa: Mesa) {
-    this.mesaEditando = { ...mesa };
-    this.abrirModalCadastroMesa = true;
-  }
 
   abrirModalAluguel(mesa: Mesa) {
     this.mesaSelecionadaAluguel = { ...mesa };
@@ -128,5 +123,60 @@ export class MesasComponent implements OnInit {
 
   mostrarErro(mensagem: string) {
     alert(mensagem);
+  }
+
+  // NOVOS MÉTODOS PARA O MODAL
+
+  abrirModalCadastro() {
+    this.mesaEditando = null;
+    this.mesaFormData = {
+      numberDesks: null,
+      nameDesks: ''
+    };
+    this.abrirModalCadastroMesa = true;
+  }
+
+  abrirModalEdicao(mesa: Mesa) {
+    this.mesaEditando = { ...mesa };
+    this.mesaFormData = {
+      numberDesks: mesa.numberDesks,
+      nameDesks: mesa.nameDesks || ''
+    };
+    this.abrirModalCadastroMesa = true;
+  }
+
+  fecharModalCadastro() {
+    this.abrirModalCadastroMesa = false;
+    this.mesaEditando = null;
+    this.mesaFormData = {
+      numberDesks: null,
+      nameDesks: ''
+    };
+    this.salvando = false;
+  }
+
+  async salvarMesa() {
+    if (this.salvando) return;
+
+    this.salvando = true;
+
+    try {
+      if (this.mesaEditando) {
+        await this.http.put(`http://localhost:8080/api/desks/${this.mesaEditando.idDesks}`, this.mesaFormData).toPromise();
+        alert('Mesa atualizada com sucesso!');
+      } else {
+        await this.http.post('http://localhost:8080/api/desks', this.mesaFormData).toPromise();
+        alert('Mesa cadastrada com sucesso!');
+      }
+
+      this.fecharModalCadastro();
+      this.buscarMesas();
+
+    } catch (error: any) {
+      console.error('Erro ao salvar mesa:', error);
+      this.mostrarErro('Erro ao salvar mesa: ' + (error.error?.message || error.message));
+    } finally {
+      this.salvando = false;
+    }
   }
 }

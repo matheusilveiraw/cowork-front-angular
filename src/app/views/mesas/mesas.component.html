@@ -34,9 +34,7 @@
     <div class="row" *ngIf="!loading && mesas.length > 0">
       <div class="col-lg-3 col-md-4 col-sm-6 mb-4" *ngFor="let mesa of mesas">
         
-        <div class="mesa-card" 
-             [class.mesa-disponivel]="estaDisponivel(mesa)"
-             [class.mesa-ocupada]="!estaDisponivel(mesa)">
+        <div class="mesa-card">
           
           <!-- Header da Mesa -->
           <div class="mesa-header">
@@ -63,7 +61,6 @@
           <div class="mesa-actions">
             <button class="btn btn-success btn-sm btn-icon"
                     (click)="abrirModalAluguel(mesa)"
-                    [disabled]="!estaDisponivel(mesa)"
                     title="Alugar mesa">
               Alugar
             </button>
@@ -108,6 +105,73 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Cadastro/Edição de Mesa -->
+<div class="modal-backdrop fade show" *ngIf="abrirModalCadastroMesa"></div>
+
+<div class="modal fade show d-block" *ngIf="abrirModalCadastroMesa" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <!-- Header do Modal -->
+      <div class="modal-header">
+        <h5 class="modal-title">
+          {{ mesaEditando ? 'Editar Mesa' : 'Nova Mesa' }}
+        </h5>
+        <button type="button" class="btn-close" (click)="fecharModalCadastro()" aria-label="Close"></button>
+      </div>
+
+      <!-- Formulário -->
+      <form (ngSubmit)="salvarMesa()" #mesaForm="ngForm">
+        <div class="modal-body">
+          
+          <!-- Número da Mesa -->
+          <div class="mb-3">
+            <label for="numeroMesa" class="form-label">Número da Mesa *</label>
+            <input type="number" 
+                   class="form-control" 
+                   id="numeroMesa"
+                   name="numberDesks"
+                   [(ngModel)]="mesaFormData.numberDesks"
+                   required
+                   min="1"
+                   #numeroInput="ngModel">
+            <div *ngIf="numeroInput.invalid && numeroInput.touched" class="text-danger">
+              <small *ngIf="numeroInput.errors?.['required']">Número da mesa é obrigatório</small>
+              <small *ngIf="numeroInput.errors?.['min']">Número deve ser maior que zero</small>
+            </div>
+          </div>
+
+          <!-- Nome da Mesa -->
+          <div class="mb-3">
+            <label for="nomeMesa" class="form-label">Nome da Mesa</label>
+            <input type="text" 
+                   class="form-control" 
+                   id="nomeMesa"
+                   name="nameDesks"
+                   [(ngModel)]="mesaFormData.nameDesks"
+                   placeholder="Ex: Mesa da Janela, Mesa do Fundo..."
+                   maxlength="50">
+            <div class="form-text">Opcional - ajuda a identificar a mesa</div>
+          </div>
+
+        </div>
+
+        <!-- Footer do Modal -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="fecharModalCadastro()">
+            Cancelar
+          </button>
+          <button type="submit" 
+                  class="btn btn-primary"
+                  [disabled]="!mesaForm.form.valid || salvando">
+            <span *ngIf="salvando" class="spinner-border spinner-border-sm me-2"></span>
+            {{ salvando ? 'Salvando...' : (mesaEditando ? 'Atualizar' : 'Cadastrar') }}
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
