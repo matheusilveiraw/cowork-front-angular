@@ -53,7 +53,6 @@ export const routes: Routes = [
         path: 'pages',
         loadChildren: () => import('./views/pages/routes').then((m) => m.routes)
       },
-      // ✅ ADICIONE A ROTA MESAS AQUI (CORRETA)
       {
         path: 'mesas',
         loadChildren: () => import('./views/mesas/routes').then((m) => m.routes)

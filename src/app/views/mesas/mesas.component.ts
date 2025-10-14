@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { CommonModule } from '@angular/common'; 
+
 
 interface Mesa {
   idDesks: number;
@@ -7,16 +9,24 @@ interface Mesa {
   nameDesks: string;
 }
 
+interface ApiResponse {
+  data: Mesa[];
+  success: boolean;
+  count: number;
+  message: string;
+}
+
 @Component({
   selector: 'app-mesas',
   templateUrl: './mesas.component.html',
-  styleUrls: ['./mesas.component.scss']
+  styleUrls: ['./mesas.component.scss'],
+  imports: [CommonModule], 
 })
 export class MesasComponent implements OnInit {
   mesas: Mesa[] = [];
   loading: boolean = false;
-  
-  // Para os modais (você vai implementar depois)
+
+  // Para os modais
   abrirModalCadastroMesa: boolean = false;
   abrirModalAluguelMesa: boolean = false;
   mesaEditando: Mesa | null = null;
@@ -31,8 +41,14 @@ export class MesasComponent implements OnInit {
   async buscarMesas() {
     this.loading = true;
     try {
-      const response: any = await this.http.get('http://localhost:8080/api/desks').toPromise();
-      this.mesas = response.data || response || [];
+      const response = await this.http.get<ApiResponse>('http://localhost:8080/api/desks').toPromise();
+
+      if (response) {
+        this.mesas = response.data || [];
+        console.log('Mesas carregadas:', this.mesas);
+      } else {
+        throw new Error('Resposta vazia do servidor');
+      }
     } catch (error: any) {
       console.error('Erro ao buscar mesas:', error);
       this.mostrarErro('Erro ao carregar mesas: ' + (error.error?.message || error.message));
@@ -41,10 +57,9 @@ export class MesasComponent implements OnInit {
     }
   }
 
-  // Métodos de Status (simulados por enquanto)
+  // Métodos de Status (mantenha por enquanto)
   estaDisponivel(mesa: Mesa): boolean {
-    // Por enquanto, vamos simular - na implementação real, você verificaria os aluguéis
-    return Math.random() > 0.3; // 70% de chance de estar disponível
+    return Math.random() > 0.3; // Simulação
   }
 
   getStatusClass(mesa: Mesa): string {
@@ -56,7 +71,6 @@ export class MesasComponent implements OnInit {
   }
 
   getProximaDisponibilidade(mesa: Mesa): string {
-    // Simulação - na implementação real, você buscaria do backend
     return this.estaDisponivel(mesa) ? 'Agora' : '15:00';
   }
 
@@ -68,7 +82,7 @@ export class MesasComponent implements OnInit {
     return this.mesas.filter(mesa => !this.estaDisponivel(mesa)).length;
   }
 
-  // Métodos dos Modais (para implementar depois)
+  // Métodos dos Modais
   abrirModalCadastro() {
     this.mesaEditando = null;
     this.abrirModalCadastroMesa = true;
@@ -90,14 +104,12 @@ export class MesasComponent implements OnInit {
   }
 
   verCalendarioMesa(mesa: Mesa) {
-    // Aqui você vai navegar para a página de calendário da mesa
     console.log('Ver calendário da mesa:', mesa);
-    // this.router.navigate(['/mesas', mesa.idDesks, 'calendario']);
   }
 
   async confirmarExclusao(mesa: Mesa) {
     const confirmacao = confirm(`Tem certeza que deseja excluir a mesa "${mesa.numberDesks} - ${mesa.nameDesks || 'Mesa sem nome'}"?`);
-    
+
     if (confirmacao) {
       await this.excluirMesa(mesa);
     }
@@ -106,10 +118,7 @@ export class MesasComponent implements OnInit {
   async excluirMesa(mesa: Mesa) {
     try {
       await this.http.delete(`http://localhost:8080/api/desks/${mesa.idDesks}`).toPromise();
-      
-      // Mostrar mensagem de sucesso
       alert('Mesa excluída com sucesso!');
-      
       this.buscarMesas();
     } catch (error: any) {
       console.error('Erro ao excluir mesa:', error);
@@ -118,7 +127,6 @@ export class MesasComponent implements OnInit {
   }
 
   mostrarErro(mensagem: string) {
-    // Implementar notificação - você pode usar um serviço de notificação
-    alert(mensagem); // Temporário
+    alert(mensagem);
   }
 }
