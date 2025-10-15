@@ -1,3 +1,4 @@
+/* Estilos para as mesas */
 .mesa-card {
   border: 1px solid #e0e0e0;
   border-radius: 12px;
@@ -10,14 +11,6 @@
     transform: translateY(-2px);
     box-shadow: 0 4px 16px rgba(0,0,0,0.15);
   }
-
-  &.mesa-disponivel {
-    border-left: 4px solid #28a745;
-  }
-
-  &.mesa-ocupada {
-    border-left: 4px solid #dc3545;
-  }
 }
 
 .mesa-header {
@@ -29,12 +22,10 @@
   border-bottom: 1px solid #e9ecef;
 }
 
-.mesa-numero {
-  .numero {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: #495057;
-  }
+.mesa-numero .numero {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #495057;
 }
 
 .mesa-status {
@@ -48,30 +39,10 @@
     background: #d4edda;
     color: #155724;
   }
-
-  &.status-ocupada {
-    background: #f8d7da;
-    color: #721c24;
-  }
 }
 
 .mesa-body {
   padding: 1rem;
-
-  .mesa-nome {
-    font-weight: 600;
-    color: #495057;
-    margin-bottom: 0.5rem;
-  }
-
-  .mesa-info {
-    .info-item {
-      small {
-        color: #6c757d;
-        font-size: 0.8rem;
-      }
-    }
-  }
 }
 
 .mesa-actions {
@@ -87,15 +58,31 @@
     min-width: 70px;
     font-size: 0.75rem;
     padding: 0.375rem 0.5rem;
-
-    &:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
   }
 }
 
-// Estatísticas
+/* Estilo para o campo de data formatado */
+.form-control[appDateFormat] {
+  font-family: 'Courier New', monospace;
+  letter-spacing: 1px;
+}
+
+/* Estilos para os modais */
+.modal-backdrop {
+  z-index: 1040;
+}
+
+.modal {
+  z-index: 1050;
+}
+
+.modal-content {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+/* Estatísticas */
 .stats-summary {
   display: flex;
   justify-content: space-around;
@@ -121,27 +108,7 @@
   }
 }
 
-// Botões de ação
-.action-buttons {
-  .btn {
-    margin-right: 0.5rem;
-    margin-bottom: 0.5rem;
-  }
-}
-
-// Loading e estados vazios
-.text-center {
-  .spinner-border {
-    width: 3rem;
-    height: 3rem;
-  }
-
-  .fa-desktop {
-    opacity: 0.5;
-  }
-}
-
-// Responsividade
+/* Responsividade */
 @media (max-width: 768px) {
   .mesa-actions {
     flex-direction: column;
@@ -154,15 +121,5 @@
   .stats-summary {
     flex-direction: column;
     gap: 1rem;
-
-    .stat-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-
-      .stat-number {
-        font-size: 1.5rem;
-      }
-    }
   }
 }
