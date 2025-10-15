@@ -61,6 +61,96 @@
   }
 }
 
+/* Estilos para o calendário corrigido */
+.calendar-container {
+  font-size: 0.875rem;
+}
+
+.calendar-weekdays {
+  background-color: #f8f9fa;
+  border-radius: 0.375rem;
+  font-weight: 600;
+}
+
+.calendar-day-cell {
+  border: 1px solid #dee2e6;
+  border-radius: 0.375rem;
+  min-height: 100px;
+  padding: 0.5rem;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  
+  &.empty {
+    background-color: #f8f9fa;
+    border-color: #e9ecef;
+  }
+  
+  &:hover:not(.empty) {
+    background-color: #f8f9fa;
+    transform: translateY(-1px);
+  }
+  
+  &.today {
+    background-color: #007bff;
+    border-color: #0056b3;
+    color: white;
+    
+    .day-number {
+      color: white;
+      font-weight: bold;
+    }
+  }
+  
+  &.occupied {
+    background-color: #fff5f5;
+    border-color: #dc3545;
+  }
+  
+  &.available {
+    background-color: #f0fff4;
+    border-color: #28a745;
+  }
+}
+
+.empty-day {
+  background: transparent;
+}
+
+.day-number {
+  font-weight: bold;
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+  text-align: center;
+}
+
+.day-shifts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  justify-content: center;
+  margin-top: auto;
+}
+
+.shift-indicator {
+  flex: 0 0 auto;
+}
+
+.shift-badge {
+  font-size: 0.6rem;
+  padding: 0.15rem 0.25rem;
+  display: block;
+  text-align: center;
+  min-width: 20px;
+}
+
+.calendar-legend {
+  .badge {
+    font-size: 0.75rem;
+    cursor: help;
+  }
+}
+
 /* Estilo para o campo de data formatado */
 .form-control[appDateFormat] {
   font-family: 'Courier New', monospace;
@@ -122,23 +212,13 @@
     flex-direction: column;
     gap: 1rem;
   }
-}
 
-/* Estilos para a mesa travada no modal */
-.alert-info {
-  .btn-outline-secondary {
-    border-color: #6c757d;
-    color: #6c757d;
-    
-    &:hover {
-      background-color: #6c757d;
-      color: white;
-    }
+  .calendar-day-cell {
+    min-height: 80px;
+    padding: 0.25rem;
   }
-}
 
-/* Destaque para quando a mesa está travada */
-.mesa-travada {
-  background-color: #f8f9fa;
-  border-left: 4px solid #007bff;
+  .day-number {
+    font-size: 0.8rem;
+  }
 }
