@@ -213,12 +213,22 @@
             </div>
           </div>
 
-          <!-- Informações da Mesa Selecionada -->
+          <!-- Informações da Mesa Selecionada (QUANDO CLICAR EM ALUGAR) -->
           <div class="mb-3" *ngIf="mesaSelecionadaAluguel">
             <label class="form-label">Mesa Selecionada</label>
             <div class="alert alert-info">
-              <strong>Mesa {{ mesaSelecionadaAluguel.numberDesks }}</strong> - 
-              {{ mesaSelecionadaAluguel.nameDesks || 'Sem nome' }}
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <strong>Mesa {{ mesaSelecionadaAluguel.numberDesks }}</strong> - 
+                  {{ mesaSelecionadaAluguel.nameDesks || 'Sem nome' }}
+                </div>
+                <button type="button" 
+                        class="btn btn-outline-secondary btn-sm"
+                        (click)="abrirModalAluguelGeral()"
+                        title="Alterar mesa">
+                  Alterar Mesa
+                </button>
+              </div>
             </div>
           </div>
 

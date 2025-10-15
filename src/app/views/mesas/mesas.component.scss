@@ -123,3 +123,22 @@
     gap: 1rem;
   }
 }
+
+/* Estilos para a mesa travada no modal */
+.alert-info {
+  .btn-outline-secondary {
+    border-color: #6c757d;
+    color: #6c757d;
+    
+    &:hover {
+      background-color: #6c757d;
+      color: white;
+    }
+  }
+}
+
+/* Destaque para quando a mesa está travada */
+.mesa-travada {
+  background-color: #f8f9fa;
+  border-left: 4px solid #007bff;
+}
