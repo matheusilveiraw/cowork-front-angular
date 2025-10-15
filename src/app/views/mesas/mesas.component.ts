@@ -37,6 +37,7 @@ interface PlanoAluguel {
 interface Turno {
   idRentalShifts: number;
   nameRentalShifts: string;
+  descriptionRentalShifts: string;
   startTimeRentalShifts: string;
   endTimeRentalShifts: string;
 }
@@ -455,14 +456,14 @@ export class MesasComponent implements OnInit {
     alert(mensagem);
   }
 
-  // ========== MÉTODOS DO CALENDÁRIO CORRIGIDOS ==========
+  // ========== MÉTODOS DO CALENDÁRIO ==========
 
   abrirModalCalendarioMesa(mesa: Mesa) {
     this.mesaSelecionadaCalendario = mesa;
     this.mesaCalendarioAtual = mesa;
     this.abrirModalCalendario = true;
     this.carregarAlugueisMesa(mesa.idDesks);
-    this.mesAtualCalendario = new Date(); // Resetar para mês atual
+    this.mesAtualCalendario = new Date();
   }
 
   fecharModalCalendario() {
@@ -513,7 +514,6 @@ export class MesasComponent implements OnInit {
     );
   }
 
-  // MÉTODO CORRIGIDO: Agora inclui dias vazios no início do mês
   getDiasDoMes(): (Date | null)[] {
     const year = this.mesAtualCalendario.getFullYear();
     const month = this.mesAtualCalendario.getMonth();
@@ -521,17 +521,14 @@ export class MesasComponent implements OnInit {
     const primeiroDia = new Date(year, month, 1);
     const ultimoDia = new Date(year, month + 1, 0);
     
-    // Dias vazios no início (para alinhar com os dias da semana)
-    const diasVaziosInicio = primeiroDia.getDay(); // 0 = Domingo, 1 = Segunda, etc.
+    const diasVaziosInicio = primeiroDia.getDay();
     
     const dias: (Date | null)[] = [];
     
-    // Adicionar dias vazios
     for (let i = 0; i < diasVaziosInicio; i++) {
       dias.push(null);
     }
     
-    // Adicionar dias do mês
     for (let dia = 1; dia <= ultimoDia.getDate(); dia++) {
       dias.push(new Date(year, month, dia));
     }
@@ -555,7 +552,6 @@ export class MesasComponent implements OnInit {
       const inicio = new Date(aluguel.startPeriodDeskRentals);
       const fim = new Date(aluguel.endPeriodDeskRentals);
 
-      // Verifica se a data está dentro do período de aluguel
       return data >= new Date(inicio.getFullYear(), inicio.getMonth(), inicio.getDate()) &&
         data <= new Date(fim.getFullYear(), fim.getMonth(), fim.getDate());
     });
@@ -570,11 +566,9 @@ export class MesasComponent implements OnInit {
       const inicio = new Date(aluguel.startPeriodDeskRentals);
       const fim = new Date(aluguel.endPeriodDeskRentals);
 
-      // Verifica se a data está dentro do período de aluguel
       if (data >= new Date(inicio.getFullYear(), inicio.getMonth(), inicio.getDate()) &&
         data <= new Date(fim.getFullYear(), fim.getMonth(), fim.getDate())) {
 
-        // Encontra o plano para obter informações do turno
         const plano = this.planosAluguel.find(p => p.idRentalPlans === aluguel.idRentalPlans);
         if (plano) {
           turnosOcupados.push(plano.rentalShift.nameRentalShifts);
@@ -585,14 +579,25 @@ export class MesasComponent implements OnInit {
     return turnosOcupados;
   }
 
-  getCorTurno(turno: string): string {
+  // MÉTODO ATUALIZADO: Usa as cores baseadas nos turnos do backend
+  getCorTurno(turnoNome: string): string {
+    // Encontra o turno completo pelo nome
+    const turno = this.turnos.find(t => t.nameRentalShifts === turnoNome);
+    
+    if (!turno) return 'bg-secondary';
+    
+    // Mapeia cores baseadas no ID ou nome do turno
     const cores: { [key: string]: string } = {
+      '1': 'bg-warning',    // Manhã
+      '2': 'bg-info',       // Tarde
+      '3': 'bg-primary',    // Dia Todo
       'Manhã': 'bg-warning',
       'Tarde': 'bg-info',
       'Dia Todo': 'bg-primary',
       'Noite': 'bg-dark'
     };
-    return cores[turno] || 'bg-secondary';
+    
+    return cores[turno.idRentalShifts.toString()] || cores[turnoNome] || 'bg-secondary';
   }
 
   ehHoje(data: Date): boolean {
@@ -637,13 +642,30 @@ export class MesasComponent implements OnInit {
     }
   }
 
-  getAbreviacaoTurno(turno: string): string {
-    const abreviacoes: { [key: string]: string } = {
-      'Manhã': 'M',
-      'Tarde': 'T',
-      'Dia Todo': 'D',
-      'Noite': 'N'
-    };
-    return abreviacoes[turno] || turno.charAt(0);
+  // MÉTODO ATUALIZADO: Gera abreviações dinamicamente dos turnos do backend
+  getAbreviacaoTurno(turnoNome: string): string {
+    // Encontra o turno completo pelo nome
+    const turno = this.turnos.find(t => t.nameRentalShifts === turnoNome);
+    
+    if (!turno) {
+      // Fallback: usa a primeira letra do nome
+      return turnoNome.charAt(0);
+    }
+    
+    // Gera abreviação baseada no nome do turno
+    const palavras = turno.nameRentalShifts.split(' ');
+    if (palavras.length === 1) {
+      // Turnos de uma palavra: primeira letra
+      return turno.nameRentalShifts.charAt(0);
+    } else {
+      // Turnos com múltiplas palavras: iniciais
+      return palavras.map(palavra => palavra.charAt(0)).join('');
+    }
+  }
+
+  // NOVO MÉTODO: Para obter a descrição completa do turno para tooltips
+  getDescricaoTurno(turnoNome: string): string {
+    const turno = this.turnos.find(t => t.nameRentalShifts === turnoNome);
+    return turno ? `${turno.nameRentalShifts} (${turno.startTimeRentalShifts} às ${turno.endTimeRentalShifts})` : turnoNome;
   }
 }

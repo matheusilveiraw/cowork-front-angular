@@ -303,7 +303,6 @@
     </div>
   </div>
 </div>
-
 <!-- Modal de Calendário -->
 <div class="modal-backdrop fade show" *ngIf="abrirModalCalendario"></div>
 
@@ -319,7 +318,7 @@
       </div>
 
       <div class="modal-body">
-        <!-- Seleção de Mesa - Simplificada -->
+        <!-- Seleção de Mesa -->
         <div class="mb-4">
           <label for="mesaCalendarioSelect" class="form-label">Selecionar Mesa</label>
           <select class="form-select" id="mesaCalendarioSelect" (change)="mudarMesaCalendario($event)"
@@ -386,7 +385,7 @@
                       <div *ngFor="let turno of getTurnosOcupados(dia)" 
                            class="shift-indicator">
                         <span class="badge {{ getCorTurno(turno) }} shift-badge" 
-                              [title]="turno + ' ocupado'">
+                              [title]="getDescricaoTurno(turno) + ' - Ocupado'">
                           {{ getAbreviacaoTurno(turno) }}
                         </span>
                       </div>
@@ -402,17 +401,18 @@
             </div>
           </div>
 
-          <!-- Legenda -->
+          <!-- Legenda Dinâmica dos Turnos -->
           <div class="calendar-legend mt-4 p-3 bg-light rounded">
             <div class="row align-items-center">
-              <div class="col">
-                <small class="fw-bold text-muted">Legenda:</small>
-                <span class="badge bg-warning ms-2" title="Manhã">M</span>
-                <span class="badge bg-info ms-1" title="Tarde">T</span>
-                <span class="badge bg-primary ms-1" title="Dia Todo">D</span>
-                <span class="badge bg-dark ms-1" title="Noite">N</span>
+              <div class="col-md-8">
+                <small class="fw-bold text-muted">Legenda dos Turnos:</small>
+                <span *ngFor="let turno of turnos" 
+                      class="badge {{ getCorTurno(turno.nameRentalShifts) }} ms-2"
+                      [title]="getDescricaoTurno(turno.nameRentalShifts)">
+                  {{ getAbreviacaoTurno(turno.nameRentalShifts) }} = {{ turno.nameRentalShifts }}
+                </span>
               </div>
-              <div class="col text-end">
+              <div class="col-md-4 text-end">
                 <span class="badge bg-success me-2" title="Disponível">Disponível</span>
                 <span class="badge bg-danger" title="Ocupado">Ocupado</span>
               </div>
