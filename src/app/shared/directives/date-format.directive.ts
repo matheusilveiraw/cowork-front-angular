@@ -25,7 +25,7 @@ export class DateFormatDirective {
     
     // Atualiza o ngModel
     if (this.control.control) {
-      this.control.control.setValue(value, { emitEvent: false });
+      this.control.control.setValue(value);
     }
   }
 
@@ -59,7 +59,7 @@ export class DateFormatDirective {
       
       this.el.nativeElement.value = formattedValue;
       if (this.control.control) {
-        this.control.control.setValue(formattedValue, { emitEvent: false });
+        this.control.control.setValue(formattedValue);
       }
     }
   }

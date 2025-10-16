@@ -247,7 +247,7 @@ export class MesasComponent implements OnInit {
     }
   }
 
-  // ========== MÉTODOS DO MODAL DE ALUGUEL ==========
+  // ========== MÉTODOS DO MODAL OF ALUGUEL ==========
 
   abrirModalAluguel(mesa: Mesa) {
     this.mesaSelecionadaAluguel = { ...mesa };
@@ -517,22 +517,22 @@ export class MesasComponent implements OnInit {
   getDiasDoMes(): (Date | null)[] {
     const year = this.mesAtualCalendario.getFullYear();
     const month = this.mesAtualCalendario.getMonth();
-    
+
     const primeiroDia = new Date(year, month, 1);
     const ultimoDia = new Date(year, month + 1, 0);
-    
+
     const diasVaziosInicio = primeiroDia.getDay();
-    
+
     const dias: (Date | null)[] = [];
-    
+
     for (let i = 0; i < diasVaziosInicio; i++) {
       dias.push(null);
     }
-    
+
     for (let dia = 1; dia <= ultimoDia.getDate(); dia++) {
       dias.push(new Date(year, month, dia));
     }
-    
+
     return dias;
   }
 
@@ -547,7 +547,7 @@ export class MesasComponent implements OnInit {
 
   estaDiaOcupado(data: Date): boolean {
     if (!data) return false;
-    
+
     return this.alugueisMesa.some(aluguel => {
       const inicio = new Date(aluguel.startPeriodDeskRentals);
       const fim = new Date(aluguel.endPeriodDeskRentals);
@@ -559,7 +559,7 @@ export class MesasComponent implements OnInit {
 
   getTurnosOcupados(data: Date): string[] {
     if (!data) return [];
-    
+
     const turnosOcupados: string[] = [];
 
     this.alugueisMesa.forEach(aluguel => {
@@ -569,9 +569,8 @@ export class MesasComponent implements OnInit {
       if (data >= new Date(inicio.getFullYear(), inicio.getMonth(), inicio.getDate()) &&
         data <= new Date(fim.getFullYear(), fim.getMonth(), fim.getDate())) {
 
-        const plano = this.planosAluguel.find(p => p.idRentalPlans === aluguel.idRentalPlans);
-        if (plano) {
-          turnosOcupados.push(plano.rentalShift.nameRentalShifts);
+        if (aluguel.rentalPlan && aluguel.rentalPlan.rentalShift) {
+          turnosOcupados.push(aluguel.rentalPlan.rentalShift.nameRentalShifts);
         }
       }
     });
@@ -579,14 +578,11 @@ export class MesasComponent implements OnInit {
     return turnosOcupados;
   }
 
-  // MÉTODO ATUALIZADO: Usa as cores baseadas nos turnos do backend
   getCorTurno(turnoNome: string): string {
-    // Encontra o turno completo pelo nome
     const turno = this.turnos.find(t => t.nameRentalShifts === turnoNome);
-    
+
     if (!turno) return 'bg-secondary';
-    
-    // Mapeia cores baseadas no ID ou nome do turno
+
     const cores: { [key: string]: string } = {
       '1': 'bg-warning',    // Manhã
       '2': 'bg-info',       // Tarde
@@ -596,13 +592,13 @@ export class MesasComponent implements OnInit {
       'Dia Todo': 'bg-primary',
       'Noite': 'bg-dark'
     };
-    
+
     return cores[turno.idRentalShifts.toString()] || cores[turnoNome] || 'bg-secondary';
   }
 
   ehHoje(data: Date): boolean {
     if (!data) return false;
-    
+
     const hoje = new Date();
     return data.getDate() === hoje.getDate() &&
       data.getMonth() === hoje.getMonth() &&
@@ -611,61 +607,82 @@ export class MesasComponent implements OnInit {
 
   getDiaClass(dia: Date | null): string {
     const classes = ['calendar-day-cell'];
-    
+
     if (!dia) {
       classes.push('empty');
       return classes.join(' ');
     }
-    
+
     if (this.ehHoje(dia)) {
       classes.push('today');
     }
-    
+
     if (this.estaDiaOcupado(dia)) {
       classes.push('occupied');
     } else {
       classes.push('available');
     }
-    
+
     return classes.join(' ');
   }
 
   getTooltipDia(dia: Date | null): string {
     if (!dia) return '';
-    
+
     const turnosOcupados = this.getTurnosOcupados(dia);
-    
-    if (turnosOcupados.length === 0) {
-      return `Dia ${dia.toLocaleDateString('pt-BR')} - Disponível`;
+
+    let tooltip = `Dia ${dia.toLocaleDateString('pt-BR')}\n`;
+
+    if (turnosOcupados.length > 0) {
+      tooltip += `🟥 Ocupado: ${turnosOcupados.join(', ')}`;
     } else {
-      return `Dia ${dia.toLocaleDateString('pt-BR')} - Ocupado nos turnos: ${turnosOcupados.join(', ')}`;
+      tooltip += `🟩 Totalmente Disponível`;
     }
+
+    return tooltip.trim();
   }
 
-  // MÉTODO ATUALIZADO: Gera abreviações dinamicamente dos turnos do backend
+  getClasseTurno(turnoNome: string): string {
+    const baseClass = 'shift-badge ';
+    const cor = this.getCorTurno(turnoNome);
+    return baseClass + cor;
+  }
+
   getAbreviacaoTurno(turnoNome: string): string {
-    // Encontra o turno completo pelo nome
     const turno = this.turnos.find(t => t.nameRentalShifts === turnoNome);
-    
+
     if (!turno) {
-      // Fallback: usa a primeira letra do nome
       return turnoNome.charAt(0);
     }
-    
-    // Gera abreviação baseada no nome do turno
+
     const palavras = turno.nameRentalShifts.split(' ');
     if (palavras.length === 1) {
-      // Turnos de uma palavra: primeira letra
       return turno.nameRentalShifts.charAt(0);
     } else {
-      // Turnos com múltiplas palavras: iniciais
       return palavras.map(palavra => palavra.charAt(0)).join('');
     }
   }
 
-  // NOVO MÉTODO: Para obter a descrição completa do turno para tooltips
   getDescricaoTurno(turnoNome: string): string {
     const turno = this.turnos.find(t => t.nameRentalShifts === turnoNome);
     return turno ? `${turno.nameRentalShifts} (${turno.startTimeRentalShifts} às ${turno.endTimeRentalShifts})` : turnoNome;
+  }
+
+  getTurnosDoDia(data: Date): { nome: string, ocupado: boolean }[] {
+    if (!data) return [];
+
+    const turnosOcupados = this.getTurnosOcupados(data);
+
+    return this.turnos
+      .filter(turno => turnosOcupados.includes(turno.nameRentalShifts))
+      .map(turno => ({
+        nome: turno.nameRentalShifts,
+        ocupado: true
+      }));
+  }
+
+  getTituloTurno(turnoNome: string): string {
+    const descricao = this.getDescricaoTurno(turnoNome);
+    return `${descricao} - Ocupado`;
   }
 }
