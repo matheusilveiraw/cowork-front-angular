@@ -8,6 +8,9 @@ interface Mesa {
   idDesks: number;
   numberDesks: number;
   nameDesks: string;
+  status?: 'available' | 'occupied' | 'unavailable';
+  nextAvailableDate?: string;
+  currentRental?: any;
 }
 
 interface Cliente {
@@ -42,6 +45,16 @@ interface Turno {
   endTimeRentalShifts: string;
 }
 
+interface AluguelMesa {
+  idDeskRentals: number;
+  startPeriodDeskRentals: string;
+  endPeriodDeskRentals: string;
+  totalPriceDeskRentals: number;
+  desk: Mesa;
+  customer: Cliente;
+  rentalPlan: PlanoAluguel;
+}
+
 interface ApiResponse {
   data: any[];
   success: boolean;
@@ -61,6 +74,7 @@ export class MesasComponent implements OnInit {
   clientes: Cliente[] = [];
   planosAluguel: PlanoAluguel[] = [];
   turnos: Turno[] = [];
+  alugueisAtivos: AluguelMesa[] = [];
 
   // Estados de loading
   loading: boolean = false;
@@ -120,6 +134,8 @@ export class MesasComponent implements OnInit {
       const response = await this.http.get<ApiResponse>('http://localhost:8080/api/desks').toPromise();
       if (response) {
         this.mesas = response.data || [];
+        // Buscar status das mesas após carregar
+        await this.buscarStatusMesas();
       }
     } catch (error: any) {
       console.error('Erro ao buscar mesas:', error);
@@ -162,30 +178,113 @@ export class MesasComponent implements OnInit {
     }
   }
 
-  // ========== MÉTODOS DE STATUS DAS MESAS ==========
+  // ========== MÉTODOS DE STATUS DAS MESAS (ATUALIZADOS) ==========
+
+  async buscarStatusMesas() {
+    try {
+      // Buscar todos os aluguéis para verificar status
+      const response = await this.http.get<ApiResponse>('http://localhost:8080/api/desk-rentals').toPromise();
+      
+      if (response && response.data) {
+        this.alugueisAtivos = response.data;
+        const agora = new Date();
+        
+        // Para cada mesa, verificar se tem aluguel ativo
+        this.mesas.forEach(mesa => {
+          const alugueisMesa = this.alugueisAtivos.filter(aluguel => 
+            aluguel.desk?.idDesks === mesa.idDesks
+          );
+          
+          // Encontrar aluguel ativo (que está em andamento)
+          const aluguelAtivo = alugueisMesa.find(aluguel => {
+            const inicio = new Date(aluguel.startPeriodDeskRentals);
+            const fim = new Date(aluguel.endPeriodDeskRentals);
+            return inicio <= agora && fim >= agora;
+          });
+          
+          if (aluguelAtivo) {
+            // Mesa está ocupada
+            mesa.status = 'occupied';
+            mesa.currentRental = aluguelAtivo;
+            mesa.nextAvailableDate = aluguelAtivo.endPeriodDeskRentals;
+          } else {
+            // Mesa está disponível, verificar próxima disponibilidade
+            mesa.status = 'available';
+            mesa.currentRental = null;
+            
+            // Buscar próximo aluguel futuro
+            const alugueisFuturos = alugueisMesa.filter(aluguel => 
+              new Date(aluguel.startPeriodDeskRentals) > agora
+            );
+            
+            if (alugueisFuturos.length > 0) {
+              // Ordenar por data mais próxima
+              const proximoAluguel = alugueisFuturos.sort((a, b) => 
+                new Date(a.startPeriodDeskRentals).getTime() - new Date(b.startPeriodDeskRentals).getTime()
+              )[0];
+              mesa.nextAvailableDate = proximoAluguel.startPeriodDeskRentals;
+            } else {
+              // Sem aluguéis futuros - totalmente disponível
+              mesa.nextAvailableDate = undefined;
+            }
+          }
+        });
+      }
+    } catch (error: any) {
+      console.error('Erro ao buscar status das mesas:', error);
+      // Em caso de erro, definir todas como disponíveis
+      this.mesas.forEach(mesa => {
+        mesa.status = 'available';
+        mesa.nextAvailableDate = undefined;
+      });
+    }
+  }
 
   estaDisponivel(mesa: Mesa): boolean {
-    return true;
+    return mesa.status === 'available';
   }
 
   getStatusClass(mesa: Mesa): string {
-    return 'status-disponivel';
+    switch (mesa.status) {
+      case 'available':
+        return 'status-disponivel';
+      case 'occupied':
+        return 'status-ocupado';
+      default:
+        return 'status-indisponivel';
+    }
   }
 
   getStatusText(mesa: Mesa): string {
-    return 'Disponível';
+    switch (mesa.status) {
+      case 'available':
+        return 'Disponível';
+      case 'occupied':
+        return 'Ocupada';
+      default:
+        return 'Indisponível';
+    }
   }
 
   getProximaDisponibilidade(mesa: Mesa): string {
-    return 'Agora';
+    if (mesa.status === 'available') {
+      return 'Agora';
+    }
+    
+    if (mesa.nextAvailableDate) {
+      const data = new Date(mesa.nextAvailableDate);
+      return this.formatarDataParaDisplay(data);
+    }
+    
+    return 'Indisponível';
   }
 
   getMesasDisponiveis(): number {
-    return this.mesas.length;
+    return this.mesas.filter(mesa => this.estaDisponivel(mesa)).length;
   }
 
   getMesasOcupadas(): number {
-    return 0;
+    return this.mesas.filter(mesa => mesa.status === 'occupied').length;
   }
 
   get mesasDisponiveis(): Mesa[] {
@@ -250,6 +349,11 @@ export class MesasComponent implements OnInit {
   // ========== MÉTODOS DO MODAL OF ALUGUEL ==========
 
   abrirModalAluguel(mesa: Mesa) {
+    if (!this.estaDisponivel(mesa)) {
+      alert('Esta mesa não está disponível para aluguel no momento.');
+      return;
+    }
+    
     this.mesaSelecionadaAluguel = { ...mesa };
     this.inicializarFormAluguel();
     this.abrirModalAluguelMesa = true;
@@ -417,7 +521,9 @@ export class MesasComponent implements OnInit {
 
       alert('Aluguel realizado com sucesso!');
       this.fecharModalAluguel();
-      this.buscarMesas();
+      
+      // Atualizar status das mesas após novo aluguel
+      await this.buscarMesas();
 
     } catch (error: any) {
       console.error('Erro ao realizar aluguel:', error);

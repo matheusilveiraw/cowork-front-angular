@@ -59,7 +59,10 @@
 
           <!-- Ações da Mesa -->
           <div class="mesa-actions">
-            <button class="btn btn-success btn-sm btn-icon" (click)="abrirModalAluguel(mesa)" title="Alugar mesa">
+            <button class="btn btn-success btn-sm btn-icon" 
+                    (click)="abrirModalAluguel(mesa)" 
+                    title="Alugar mesa"
+                    [disabled]="!estaDisponivel(mesa)">
               Alugar
             </button>
 
