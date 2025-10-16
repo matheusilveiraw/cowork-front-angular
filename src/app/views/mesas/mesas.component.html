@@ -1,3 +1,22 @@
+<!-- Notificações -->
+<div class="notifications-container">
+  <div *ngFor="let notification of notifications" 
+       class="notification" 
+       [class.success]="notification.type === 'success'"
+       [class.error]="notification.type === 'error'"
+       [class.info]="notification.type === 'info'"
+       [class.hiding]="!notification.visible">
+    <div class="notification-content">
+      <div class="notification-message">
+        {{ notification.message }}
+      </div>
+      <button class="notification-close" (click)="removeNotification(notification.id)">
+        ×
+      </button>
+    </div>
+  </div>
+</div>
+
 <div class="card mb-4">
   <div class="card-header">
     <h4 class="mb-0">Mesas</h4>

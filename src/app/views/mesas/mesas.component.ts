@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DateFormatDirective } from '../../shared/directives/date-format.directive';
+import Swal from 'sweetalert2';
 
 interface Mesa {
   idDesks: number;
@@ -62,6 +63,13 @@ interface ApiResponse {
   message: string;
 }
 
+interface Notification {
+  id: number;
+  type: 'success' | 'error' | 'info';
+  message: string;
+  visible: boolean;
+}
+
 @Component({
   selector: 'app-mesas',
   templateUrl: './mesas.component.html',
@@ -117,6 +125,10 @@ export class MesasComponent implements OnInit {
   dataTermino: string = '';
   dataInicioDisplay: string = '';
 
+  // Notificações
+  notifications: Notification[] = [];
+  private notificationId: number = 0;
+
   constructor(private http: HttpClient) { }
 
   ngOnInit() {
@@ -124,6 +136,34 @@ export class MesasComponent implements OnInit {
     this.buscarClientes();
     this.buscarPlanosAluguel();
     this.buscarTurnos();
+  }
+
+  // ========== MÉTODOS DE NOTIFICAÇÃO ==========
+
+  showNotification(type: 'success' | 'error' | 'info', message: string) {
+    const notification: Notification = {
+      id: this.notificationId++,
+      type,
+      message,
+      visible: true
+    };
+
+    this.notifications.push(notification);
+
+    // Auto-remover após 5 segundos
+    setTimeout(() => {
+      this.removeNotification(notification.id);
+    }, 5000);
+  }
+
+  removeNotification(id: number) {
+    const notification = this.notifications.find(n => n.id === id);
+    if (notification) {
+      notification.visible = false;
+      setTimeout(() => {
+        this.notifications = this.notifications.filter(n => n.id !== id);
+      }, 300);
+    }
   }
 
   // ========== MÉTODOS PARA BUSCAR DADOS ==========
@@ -139,7 +179,7 @@ export class MesasComponent implements OnInit {
       }
     } catch (error: any) {
       console.error('Erro ao buscar mesas:', error);
-      this.mostrarErro('Erro ao carregar mesas: ' + (error.error?.message || error.message));
+      this.showNotification('error', 'Erro ao carregar mesas: ' + (error.error?.message || error.message));
     } finally {
       this.loading = false;
     }
@@ -327,12 +367,16 @@ export class MesasComponent implements OnInit {
     this.salvando = true;
 
     try {
+      let response: any;
+      
       if (this.mesaEditando) {
-        await this.http.put(`http://localhost:8080/api/desks/${this.mesaEditando.idDesks}`, this.mesaFormData).toPromise();
-        alert('Mesa atualizada com sucesso!');
+        response = await this.http.put(`http://localhost:8080/api/desks/${this.mesaEditando.idDesks}`, this.mesaFormData).toPromise();
+        const message = response?.message || 'Mesa atualizada com sucesso!';
+        this.showNotification('success', message);
       } else {
-        await this.http.post('http://localhost:8080/api/desks', this.mesaFormData).toPromise();
-        alert('Mesa cadastrada com sucesso!');
+        response = await this.http.post('http://localhost:8080/api/desks', this.mesaFormData).toPromise();
+        const message = response?.message || 'Mesa cadastrada com sucesso!';
+        this.showNotification('success', message);
       }
 
       this.fecharModalCadastro();
@@ -340,7 +384,8 @@ export class MesasComponent implements OnInit {
 
     } catch (error: any) {
       console.error('Erro ao salvar mesa:', error);
-      this.mostrarErro('Erro ao salvar mesa: ' + (error.error?.message || error.message));
+      const errorMessage = error.error?.message || error.message || 'Erro ao salvar mesa';
+      this.showNotification('error', errorMessage);
     } finally {
       this.salvando = false;
     }
@@ -350,7 +395,7 @@ export class MesasComponent implements OnInit {
 
   abrirModalAluguel(mesa: Mesa) {
     if (!this.estaDisponivel(mesa)) {
-      alert('Esta mesa não está disponível para aluguel no momento.');
+      this.showNotification('error', 'Esta mesa não está disponível para aluguel no momento.');
       return;
     }
     
@@ -517,9 +562,11 @@ export class MesasComponent implements OnInit {
         totalPriceDeskRentals: this.aluguelFormData.totalPriceDeskRentals
       };
 
-      await this.http.post('http://localhost:8080/api/desk-rentals', dadosAluguel).toPromise();
-
-      alert('Aluguel realizado com sucesso!');
+      const response = await this.http.post('http://localhost:8080/api/desk-rentals', dadosAluguel).toPromise();
+      
+      const message = (response as any)?.message || 'Aluguel realizado com sucesso!';
+      this.showNotification('success', message);
+      
       this.fecharModalAluguel();
       
       // Atualizar status das mesas após novo aluguel
@@ -527,7 +574,8 @@ export class MesasComponent implements OnInit {
 
     } catch (error: any) {
       console.error('Erro ao realizar aluguel:', error);
-      this.mostrarErro('Erro ao realizar aluguel: ' + (error.error?.message || error.message));
+      const errorMessage = error.error?.message || error.message || 'Erro ao realizar aluguel';
+      this.showNotification('error', errorMessage);
     } finally {
       this.salvandoAluguel = false;
     }
@@ -536,30 +584,38 @@ export class MesasComponent implements OnInit {
   // ========== MÉTODOS AUXILIARES ==========
 
   abrirModalCliente() {
-    alert('Funcionalidade de cadastro de cliente será implementada em breve');
+    this.showNotification('info', 'Funcionalidade de cadastro de cliente será implementada em breve');
   }
 
   async confirmarExclusao(mesa: Mesa) {
-    const confirmacao = confirm(`Tem certeza que deseja excluir a mesa "${mesa.numberDesks} - ${mesa.nameDesks || 'Mesa sem nome'}"?`);
+    const result = await Swal.fire({
+      title: 'Tem certeza?',
+      text: `Deseja excluir a mesa "${mesa.numberDesks} - ${mesa.nameDesks || 'Mesa sem nome'}"?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Sim, excluir!',
+      cancelButtonText: 'Cancelar',
+      reverseButtons: true
+    });
 
-    if (confirmacao) {
+    if (result.isConfirmed) {
       await this.excluirMesa(mesa);
     }
   }
 
   async excluirMesa(mesa: Mesa) {
     try {
-      await this.http.delete(`http://localhost:8080/api/desks/${mesa.idDesks}`).toPromise();
-      alert('Mesa excluída com sucesso!');
+      const response = await this.http.delete(`http://localhost:8080/api/desks/${mesa.idDesks}`).toPromise();
+      const message = (response as any)?.message || 'Mesa excluída com sucesso!';
+      this.showNotification('success', message);
       this.buscarMesas();
     } catch (error: any) {
       console.error('Erro ao excluir mesa:', error);
-      this.mostrarErro('Erro ao excluir mesa: ' + (error.error?.message || error.message));
+      const errorMessage = error.error?.message || error.message || 'Erro ao excluir mesa';
+      this.showNotification('error', errorMessage);
     }
-  }
-
-  mostrarErro(mensagem: string) {
-    alert(mensagem);
   }
 
   // ========== MÉTODOS DO CALENDÁRIO ==========
@@ -589,7 +645,7 @@ export class MesasComponent implements OnInit {
       }
     } catch (error: any) {
       console.error('Erro ao buscar aluguéis da mesa:', error);
-      this.mostrarErro('Erro ao carregar calendário: ' + (error.error?.message || error.message));
+      this.showNotification('error', 'Erro ao carregar calendário: ' + (error.error?.message || error.message));
     } finally {
       this.loadingCalendario = false;
     }
