@@ -224,24 +224,24 @@ export class MesasComponent implements OnInit {
     try {
       // Buscar todos os aluguéis para verificar status
       const response = await this.http.get<ApiResponse>('http://localhost:8080/api/desk-rentals').toPromise();
-      
+
       if (response && response.data) {
         this.alugueisAtivos = response.data;
         const agora = new Date();
-        
+
         // Para cada mesa, verificar se tem aluguel ativo
         this.mesas.forEach(mesa => {
-          const alugueisMesa = this.alugueisAtivos.filter(aluguel => 
+          const alugueisMesa = this.alugueisAtivos.filter(aluguel =>
             aluguel.desk?.idDesks === mesa.idDesks
           );
-          
+
           // Encontrar aluguel ativo (que está em andamento)
           const aluguelAtivo = alugueisMesa.find(aluguel => {
             const inicio = new Date(aluguel.startPeriodDeskRentals);
             const fim = new Date(aluguel.endPeriodDeskRentals);
             return inicio <= agora && fim >= agora;
           });
-          
+
           if (aluguelAtivo) {
             // Mesa está ocupada
             mesa.status = 'occupied';
@@ -251,15 +251,15 @@ export class MesasComponent implements OnInit {
             // Mesa está disponível, verificar próxima disponibilidade
             mesa.status = 'available';
             mesa.currentRental = null;
-            
+
             // Buscar próximo aluguel futuro
-            const alugueisFuturos = alugueisMesa.filter(aluguel => 
+            const alugueisFuturos = alugueisMesa.filter(aluguel =>
               new Date(aluguel.startPeriodDeskRentals) > agora
             );
-            
+
             if (alugueisFuturos.length > 0) {
               // Ordenar por data mais próxima
-              const proximoAluguel = alugueisFuturos.sort((a, b) => 
+              const proximoAluguel = alugueisFuturos.sort((a, b) =>
                 new Date(a.startPeriodDeskRentals).getTime() - new Date(b.startPeriodDeskRentals).getTime()
               )[0];
               mesa.nextAvailableDate = proximoAluguel.startPeriodDeskRentals;
@@ -310,12 +310,12 @@ export class MesasComponent implements OnInit {
     if (mesa.status === 'available') {
       return 'Agora';
     }
-    
+
     if (mesa.nextAvailableDate) {
       const data = new Date(mesa.nextAvailableDate);
       return this.formatarDataParaDisplay(data);
     }
-    
+
     return 'Indisponível';
   }
 
@@ -368,7 +368,7 @@ export class MesasComponent implements OnInit {
 
     try {
       let response: any;
-      
+
       if (this.mesaEditando) {
         response = await this.http.put(`http://localhost:8080/api/desks/${this.mesaEditando.idDesks}`, this.mesaFormData).toPromise();
         const message = response?.message || 'Mesa atualizada com sucesso!';
@@ -398,7 +398,7 @@ export class MesasComponent implements OnInit {
       this.showNotification('error', 'Esta mesa não está disponível para aluguel no momento.');
       return;
     }
-    
+
     this.mesaSelecionadaAluguel = { ...mesa };
     this.inicializarFormAluguel();
     this.abrirModalAluguelMesa = true;
@@ -563,12 +563,12 @@ export class MesasComponent implements OnInit {
       };
 
       const response = await this.http.post('http://localhost:8080/api/desk-rentals', dadosAluguel).toPromise();
-      
+
       const message = (response as any)?.message || 'Aluguel realizado com sucesso!';
       this.showNotification('success', message);
-      
+
       this.fecharModalAluguel();
-      
+
       // Atualizar status das mesas após novo aluguel
       await this.buscarMesas();
 
@@ -607,10 +607,18 @@ export class MesasComponent implements OnInit {
 
   async excluirMesa(mesa: Mesa) {
     try {
+      const alugueisResponse = await this.http.get<ApiResponse>(`http://localhost:8080/api/desk-rentals?deskId=${mesa.idDesks}`).toPromise();
+
+      if (alugueisResponse && alugueisResponse.data && alugueisResponse.data.length > 0) {
+        this.showNotification('error', 'Esta mesa possui aluguéis vinculados e não pode ser removida. Exclua os aluguéis primeiro.');
+        return;
+      }
+
       const response = await this.http.delete(`http://localhost:8080/api/desks/${mesa.idDesks}`).toPromise();
       const message = (response as any)?.message || 'Mesa excluída com sucesso!';
       this.showNotification('success', message);
       this.buscarMesas();
+
     } catch (error: any) {
       console.error('Erro ao excluir mesa:', error);
       const errorMessage = error.error?.message || error.message || 'Erro ao excluir mesa';
