@@ -1,4 +1,6 @@
 import { Routes } from '@angular/router';
+import { MesasComponent } from './views/mesas/mesas.component';
+import { StandsComponent } from './views/stands/stands.component';
 
 export const routes: Routes = [
   {
@@ -55,8 +57,12 @@ export const routes: Routes = [
       },
       {
         path: 'mesas',
-        loadChildren: () => import('./views/mesas/routes').then((m) => m.routes)
-      }
+        component: MesasComponent
+      },
+      {
+        path: 'stands',
+        component: StandsComponent
+      },
     ]
   },
   {

@@ -1,1 +1,478 @@
-<p>stands works!</p>
+<!-- Notificações -->
+<div class="notifications-container">
+  <div *ngFor="let notification of notifications" 
+       class="notification" 
+       [class.success]="notification.type === 'success'"
+       [class.error]="notification.type === 'error'"
+       [class.info]="notification.type === 'info'"
+       [class.hiding]="!notification.visible">
+    <div class="notification-content">
+      <div class="notification-message">
+        {{ notification.message }}
+      </div>
+      <button class="notification-close" (click)="removeNotification(notification.id)">
+        ×
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header">
+    <h4 class="mb-0">Stands</h4>
+    <p class="text-muted mb-0">Gerencie os stands do seu coworking</p>
+  </div>
+
+  <div class="card-body">
+    <!-- Botões de Ação -->
+    <div class="action-buttons mb-4">
+      <button class="btn btn-primary me-2" (click)="abrirModalCadastro()">
+        Novo Stand
+      </button>
+      <button class="btn btn-info me-2" (click)="abrirModalAluguelGeral()">
+        Alugar Stand
+      </button>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Carregando...</span>
+      </div>
+      <p class="mt-2">Carregando stands...</p>
+    </div>
+
+    <!-- Lista Vazia -->
+    <div *ngIf="!loading && stands.length === 0" class="text-center py-5">
+      <i class="fas fa-cube text-muted" style="font-size: 48px;"></i>
+      <h5 class="mt-3">Nenhum stand cadastrado</h5>
+      <p class="text-muted">Clique em "Novo Stand" para começar</p>
+    </div>
+
+    <!-- Grid de Stands -->
+    <div class="row" *ngIf="!loading && stands.length > 0">
+      <div class="col-lg-3 col-md-4 col-sm-6 mb-4" *ngFor="let stand of stands">
+
+        <div class="stand-card">
+
+          <!-- Header do Stand -->
+          <div class="stand-header">
+            <div class="stand-numero">
+              <span class="numero">{{ stand.numberStands }}</span>
+            </div>
+            <div class="stand-status" [class]="getStatusClass(stand)">
+              {{ getStatusText(stand) }}
+            </div>
+          </div>
+
+          <!-- Corpo do Stand -->
+          <div class="stand-body">
+            <h6 class="stand-nome">{{ stand.nameStands || 'Stand sem nome' }}</h6>
+
+            <div class="stand-info">
+              <div class="info-item">
+                <small>Próxima disponibilidade: {{ getProximaDisponibilidade(stand) }}</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ações do Stand -->
+          <div class="stand-actions">
+            <button class="btn btn-success btn-sm btn-icon" 
+                    (click)="abrirModalAluguel(stand)" 
+                    title="Alugar stand"
+                    [disabled]="!estaDisponivel(stand)">
+              Alugar
+            </button>
+
+            <button class="btn btn-primary btn-sm btn-icon" (click)="abrirModalEdicao(stand)" title="Editar stand">
+              Editar
+            </button>
+
+            <button class="btn btn-danger btn-sm btn-icon" (click)="confirmarExclusao(stand)" title="Excluir stand">
+              Excluir
+            </button>
+
+            <button class="btn btn-info btn-sm btn-icon" (click)="abrirModalCalendarioStand(stand)"
+              title="Ver calendário">
+              Calendário
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resumo -->
+    <div *ngIf="!loading && stands.length > 0" class="row mt-4">
+      <div class="col-12">
+        <div class="stats-summary">
+          <div class="stat-item">
+            <span class="stat-number">{{ stands.length }}</span>
+            <span class="stat-label">Total de Stands</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number">{{ getStandsDisponiveis() }}</span>
+            <span class="stat-label">Disponíveis</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number">{{ getStandsOcupados() }}</span>
+            <span class="stat-label">Ocupados</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Cadastro/Edição de Stand -->
+<div class="modal-backdrop fade show" *ngIf="abrirModalCadastroStand"></div>
+
+<div class="modal fade show d-block" *ngIf="abrirModalCadastroStand" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <!-- Header do Modal -->
+      <div class="modal-header">
+        <h5 class="modal-title">
+          {{ standEditando ? 'Editar Stand' : 'Novo Stand' }}
+        </h5>
+        <button type="button" class="btn-close" (click)="fecharModalCadastro()" aria-label="Close"></button>
+      </div>
+
+      <!-- Formulário -->
+      <form (ngSubmit)="salvarStand()" #standForm="ngForm">
+        <div class="modal-body">
+
+          <!-- Número do Stand -->
+          <div class="mb-3">
+            <label for="numeroStand" class="form-label">Número do Stand *</label>
+            <input type="number" class="form-control" id="numeroStand" name="numberStands"
+              [(ngModel)]="standFormData.numberStands" required min="1" #numeroInput="ngModel">
+            <div *ngIf="numeroInput.invalid && numeroInput.touched" class="text-danger">
+              <small *ngIf="numeroInput.errors?.['required']">Número do stand é obrigatório</small>
+              <small *ngIf="numeroInput.errors?.['min']">Número deve ser maior que zero</small>
+            </div>
+          </div>
+
+          <!-- Nome do Stand -->
+          <div class="mb-3">
+            <label for="nomeStand" class="form-label">Nome do Stand</label>
+            <input type="text" class="form-control" id="nomeStand" name="nameStands" [(ngModel)]="standFormData.nameStands"
+              placeholder="Ex: Stand Central, Stand da Entrada..." maxlength="50">
+            <div class="form-text">Opcional - ajuda a identificar o stand</div>
+          </div>
+
+        </div>
+
+        <!-- Footer do Modal -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="fecharModalCadastro()">
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="!standForm.form.valid || salvando">
+            <span *ngIf="salvando" class="spinner-border spinner-border-sm me-2"></span>
+            {{ salvando ? 'Salvando...' : (standEditando ? 'Atualizar' : 'Cadastrar') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Aluguel de Stand -->
+<div class="modal-backdrop fade show" *ngIf="abrirModalAluguelStand"></div>
+
+<div class="modal fade show d-block" *ngIf="abrirModalAluguelStand" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+    <div class="modal-content">
+      <!-- Header do Modal -->
+      <div class="modal-header">
+        <h5 class="modal-title">
+          {{ standSelecionadoAluguel ? 'Alugar Stand ' + standSelecionadoAluguel.numberStands : 'Alugar Stand' }}
+        </h5>
+        <button type="button" class="btn-close" (click)="fecharModalAluguel()" aria-label="Close"></button>
+      </div>
+
+      <!-- Formulário de Aluguel -->
+      <form (ngSubmit)="salvarAluguel()" #aluguelForm="ngForm">
+        <div class="modal-body">
+
+          <!-- Seleção de Stand (se for aluguel geral) -->
+          <div class="mb-3" *ngIf="!standSelecionadoAluguel">
+            <label for="standSelect" class="form-label">Selecionar Stand *</label>
+            <select class="form-select" id="standSelect" name="idStands" [(ngModel)]="aluguelFormData.idStands" required
+              #standSelect="ngModel">
+              <option value="">Selecione um stand</option>
+              <option *ngFor="let stand of standsDisponiveis" [value]="stand.idStands">
+                Stand {{ stand.numberStands }} - {{ stand.nameStands || 'Sem nome' }}
+              </option>
+            </select>
+            <div *ngIf="standSelect.invalid && standSelect.touched" class="text-danger">
+              <small>Seleção do stand é obrigatória</small>
+            </div>
+          </div>
+
+          <!-- Informações do Stand Selecionado -->
+          <div class="mb-3" *ngIf="standSelecionadoAluguel">
+            <label class="form-label">Stand Selecionado</label>
+            <div class="alert alert-info">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <strong>Stand {{ standSelecionadoAluguel.numberStands }}</strong> -
+                  {{ standSelecionadoAluguel.nameStands || 'Sem nome' }}
+                </div>
+                <button type="button" class="btn btn-outline-secondary btn-sm" (click)="abrirModalAluguelGeral()"
+                  title="Alterar stand">
+                  Alterar Stand
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Seleção de Cliente -->
+          <div class="mb-3">
+            <label for="clienteSelect" class="form-label">Cliente *</label>
+            <select class="form-select" id="clienteSelect" name="idCustomers" [(ngModel)]="aluguelFormData.idCustomers"
+              required #clienteSelect="ngModel">
+              <option value="">Selecione um cliente</option>
+              <option *ngFor="let cliente of clientes" [value]="cliente.idCustomers">
+                {{ cliente.nameCustomers }} - {{ cliente.emailCustomers }}
+              </option>
+            </select>
+            <div *ngIf="clienteSelect.invalid && clienteSelect.touched" class="text-danger">
+              <small>Seleção do cliente é obrigatória</small>
+            </div>
+            <div class="form-text">
+              <a href="javascript:void(0)" (click)="abrirModalCliente()" class="text-primary">
+                + Cadastrar novo cliente
+              </a>
+            </div>
+          </div>
+
+          <!-- Seleção de Plano -->
+          <div class="mb-3">
+            <label for="planoSelect" class="form-label">Plano de Aluguel *</label>
+            <select class="form-select" id="planoSelect" name="idRentalPlans"
+              [(ngModel)]="aluguelFormData.idRentalPlans" required (change)="onPlanoChange()" #planoSelect="ngModel">
+              <option value="">Selecione um plano</option>
+              <option *ngFor="let plano of planosAluguel" [value]="plano.idRentalPlans">
+                {{ plano.planNameRentalPlans }} - R$ {{ plano.priceRentalPlans }}
+              </option>
+            </select>
+            <div *ngIf="planoSelect.invalid && planoSelect.touched" class="text-danger">
+              <small>Seleção do plano é obrigatória</small>
+            </div>
+          </div>
+
+          <!-- Período do Aluguel -->
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="dataInicio" class="form-label">Data de Início *</label>
+              <input type="text" class="form-control" id="dataInicio" name="dataInicioDisplay"
+                [(ngModel)]="dataInicioDisplay" required appDateFormat (ngModelChange)="onDataInicioChange($event)"
+                placeholder="DD/MM/AAAA" #dataInicio="ngModel" maxlength="10">
+              <div *ngIf="dataInicio.invalid && dataInicio.touched" class="text-danger">
+                <small *ngIf="dataInicio.errors?.['required']">Data de início é obrigatória</small>
+                <small>Formato deve ser DD/MM/AAAA</small>
+              </div>
+              <div class="form-text">Digite a data no formato DD/MM/AAAA</div>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Horário de Início</label>
+              <div class="form-control-plaintext border rounded p-2 bg-light">
+                {{ horarioInicio || 'Selecione um plano' }}
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Data de Término</label>
+              <div class="form-control-plaintext border rounded p-2 bg-light">
+                {{ dataTermino || 'Selecione um plano' }}
+              </div>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Horário de Término</label>
+              <div class="form-control-plaintext border rounded p-2 bg-light">
+                {{ horarioFim || 'Selecione um plano' }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Resumo do Aluguel -->
+          <div class="alert alert-success" *ngIf="aluguelFormData.totalPriceStandRentals > 0">
+            <div class="d-flex justify-content-between">
+              <strong>Total do Aluguel:</strong>
+              <strong>R$ {{ aluguelFormData.totalPriceStandRentals }}</strong>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Footer do Modal -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="fecharModalAluguel()">
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-success" [disabled]="!aluguelForm.form.valid || salvandoAluguel">
+            <span *ngIf="salvandoAluguel" class="spinner-border spinner-border-sm me-2"></span>
+            {{ salvandoAluguel ? 'Processando...' : 'Confirmar Aluguel' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Calendário -->
+<div class="modal-backdrop fade show" *ngIf="abrirModalCalendario"></div>
+
+<div class="modal fade show d-block" *ngIf="abrirModalCalendario" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+    <div class="modal-content">
+      <!-- Header do Modal -->
+      <div class="modal-header">
+        <h5 class="modal-title">
+          Calendário do Stand
+        </h5>
+        <button type="button" class="btn-close" (click)="fecharModalCalendario()" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Seleção de Stand -->
+        <div class="mb-4">
+          <label for="standCalendarioSelect" class="form-label">Selecionar Stand</label>
+          <select class="form-select" id="standCalendarioSelect" (change)="mudarStandCalendario($event)"
+            [value]="standCalendarioAtual?.idStands">
+            <option *ngFor="let stand of stands" [value]="stand.idStands"
+              [selected]="stand.idStands === standCalendarioAtual?.idStands">
+              Stand {{ stand.numberStands }} - {{ stand.nameStands || 'Sem nome' }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Loading do Calendário -->
+        <div *ngIf="loadingCalendario" class="text-center py-3">
+          <div class="spinner-border spinner-border-sm text-primary" role="status">
+            <span class="visually-hidden">Carregando...</span>
+          </div>
+          <small class="text-muted ms-2">Carregando agendamentos...</small>
+        </div>
+
+        <!-- Calendário -->
+        <div *ngIf="!loadingCalendario" class="calendar-container">
+          <!-- Controles do Mês -->
+          <div class="calendar-header mb-3">
+            <div class="row align-items-center">
+              <div class="col">
+                <button class="btn btn-outline-primary btn-sm" (click)="mesAnterior()">
+                  ‹ Anterior
+                </button>
+              </div>
+              <div class="col text-center">
+                <h5 class="mb-0 fw-bold text-primary">{{ getNomeMes() }}</h5>
+              </div>
+              <div class="col text-end">
+                <button class="btn btn-outline-primary btn-sm" (click)="mesProximo()">
+                  Próximo ›
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dias da Semana -->
+          <div class="calendar-weekdays row g-0 mb-2">
+            <div class="col text-center p-2 fw-bold text-muted" *ngFor="let dia of getDiasDaSemana()">
+              {{ dia }}
+            </div>
+          </div>
+
+          <!-- Dias do Mês -->
+          <div class="calendar-days">
+            <div class="row g-0">
+              <div class="col p-1" *ngFor="let dia of getDiasDoMes(); let i = index">
+                <div class="calendar-day-cell h-100" 
+                     [class]="getDiaClass(dia)"
+                     [title]="getTooltipDia(dia)">
+                  
+                  <div *ngIf="dia; else emptyDay">
+                    <!-- Número do Dia -->
+                    <div class="day-number" [class.text-white]="ehHoje(dia)">
+                      {{ dia.getDate() }}
+                    </div>
+
+                    <!-- Turnos Ocupados -->
+                    <div class="day-shifts mt-1" *ngIf="getTurnosDoDia(dia).length > 0">
+                      <div *ngFor="let turno of getTurnosDoDia(dia)" 
+                           class="shift-indicator">
+                        <span class="badge {{ getClasseTurno(turno.nome) }}" 
+                              [title]="getTituloTurno(turno.nome)">
+                          {{ getAbreviacaoTurno(turno.nome) }}
+                        </span>
+                      </div>
+                    </div>
+
+                    <!-- Indicador visual rápido de status do dia -->
+                    <div class="day-status-indicator mt-1">
+                      <small *ngIf="estaDiaOcupado(dia)" class="text-danger">
+                        <i class="fas fa-times-circle"></i> Ocupado
+                      </small>
+                      <small *ngIf="!estaDiaOcupado(dia)" class="text-success">
+                        <i class="fas fa-check-circle"></i> Disponível
+                      </small>
+                    </div>
+                  </div>
+
+                  <ng-template #emptyDay>
+                    <div class="empty-day h-100"></div>
+                  </ng-template>
+
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Legenda Dinâmica dos Turnos -->
+          <div class="calendar-legend mt-4 p-3 bg-light rounded">
+            <div class="row">
+              <div class="col-md-6">
+                <small class="fw-bold text-muted">Legenda dos Turnos:</small>
+                <div class="mt-2">
+                  <div *ngFor="let turno of turnos" class="d-inline-block me-3 mb-2">
+                    <span class="badge {{ getCorTurno(turno.nameRentalShifts) }} me-1">
+                      {{ getAbreviacaoTurno(turno.nameRentalShifts) }}
+                    </span>
+                    <small>= {{ turno.nameRentalShifts }}</small>
+                    <br>
+                    <small class="text-muted">{{ turno.startTimeRentalShifts }} às {{ turno.endTimeRentalShifts }}</small>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <small class="fw-bold text-muted">Status:</small>
+                <div class="mt-2">
+                  <div class="mb-1">
+                    <span class="badge bg-success me-2">✓</span>
+                    <small>Dia Disponível (sem turnos marcados)</small>
+                  </div>
+                  <div class="mb-1">
+                    <span class="badge bg-danger me-2">✗</span>
+                    <small>Dia Ocupado (com turnos marcados)</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="fecharModalCalendario()">
+          Fechar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
