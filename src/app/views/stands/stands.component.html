@@ -78,10 +78,10 @@
 
           <!-- Ações do Stand -->
           <div class="stand-actions">
+            <!-- REMOVIDO O [disabled] DO BOTÃO ALUGAR -->
             <button class="btn btn-success btn-sm btn-icon" 
                     (click)="abrirModalAluguel(stand)" 
-                    title="Alugar stand"
-                    [disabled]="!estaDisponivel(stand)">
+                    title="Alugar stand">
               Alugar
             </button>
 
@@ -202,7 +202,7 @@
             <select class="form-select" id="standSelect" name="idStands" [(ngModel)]="aluguelFormData.idStands" required
               #standSelect="ngModel">
               <option value="">Selecione um stand</option>
-              <option *ngFor="let stand of standsDisponiveis" [value]="stand.idStands">
+              <option *ngFor="let stand of stands" [value]="stand.idStands">
                 Stand {{ stand.numberStands }} - {{ stand.nameStands || 'Sem nome' }}
               </option>
             </select>

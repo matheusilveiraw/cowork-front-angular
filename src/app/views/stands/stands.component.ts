@@ -382,11 +382,7 @@ export class StandsComponent implements OnInit {
   // ========== MÉTODOS DO MODAL DE ALUGUEL ==========
 
   abrirModalAluguel(stand: Stand) {
-    if (!this.estaDisponivel(stand)) {
-      this.showNotification('error', 'Este stand não está disponível para aluguel no momento.');
-      return;
-    }
-
+    // REMOVIDA A VERIFICAÇÃO DE DISPONIBILIDADE - SEMPRE PERMITE ABRIR O MODAL
     this.standSelecionadoAluguel = { ...stand };
     this.inicializarFormAluguel();
     this.abrirModalAluguelStand = true;
