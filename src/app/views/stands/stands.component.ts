@@ -382,7 +382,6 @@ export class StandsComponent implements OnInit {
   // ========== MÉTODOS DO MODAL DE ALUGUEL ==========
 
   abrirModalAluguel(stand: Stand) {
-    // REMOVIDA A VERIFICAÇÃO DE DISPONIBILIDADE - SEMPRE PERMITE ABRIR O MODAL
     this.standSelecionadoAluguel = { ...stand };
     this.inicializarFormAluguel();
     this.abrirModalAluguelStand = true;
@@ -524,14 +523,33 @@ export class StandsComponent implements OnInit {
         this.standSelecionadoAluguel.idStands :
         Number(this.aluguelFormData.idStands);
 
+      const idCustomers = Number(this.aluguelFormData.idCustomers);
+      const idRentalPlans = Number(this.aluguelFormData.idRentalPlans);
+
+      const standSelecionado = this.stands.find(s => s.idStands === idStands);
+      const clienteSelecionado = this.clientes.find(c => c.idCustomers === idCustomers);
+      const planoSelecionado = this.planosAluguel.find(p => p.idRentalPlans === idRentalPlans);
+
+      if (!standSelecionado) {
+        throw new Error('Stand não encontrado');
+      }
+      if (!clienteSelecionado) {
+        throw new Error('Cliente não encontrado');
+      }
+      if (!planoSelecionado) {
+        throw new Error('Plano de aluguel não encontrado');
+      }
+
       const dadosAluguel = {
-        idStands: idStands,
-        idCustomers: Number(this.aluguelFormData.idCustomers),
-        idRentalPlans: Number(this.aluguelFormData.idRentalPlans),
+        stand: standSelecionado,
+        customer: clienteSelecionado,
+        rentalPlan: planoSelecionado,
         startPeriodStandRentals: this.aluguelFormData.startPeriodStandRentals,
         endPeriodStandRentals: this.aluguelFormData.endPeriodStandRentals,
         totalPriceStandRentals: this.aluguelFormData.totalPriceStandRentals
       };
+
+      console.log('Enviando dados para o backend:', dadosAluguel);
 
       const response = await this.http.post('http://localhost:8080/api/stand-rentals', dadosAluguel).toPromise();
 
