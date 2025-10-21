@@ -394,14 +394,12 @@ export class StandsComponent implements OnInit {
   }
 
   inicializarFormAluguel() {
-    const hoje = new Date();
-    this.dataInicioDisplay = this.formatarDataParaDisplay(hoje);
-
+    this.dataInicioDisplay = '';
     this.aluguelFormData = {
       idStands: this.standSelecionadoAluguel?.idStands?.toString() || '',
       idCustomers: '',
       idRentalPlans: '',
-      startPeriodStandRentals: this.formatarDataParaBackend(hoje),
+      startPeriodStandRentals: '',
       endPeriodStandRentals: '',
       totalPriceStandRentals: 0
     };
@@ -433,16 +431,13 @@ export class StandsComponent implements OnInit {
     this.calcularDatasETotal();
   }
 
-  onDataInicioChange(event: any) {
-    const dataSelecionada = event.target.value;
+  onDataInicioChange(dataSelecionada: string) {
 
     if (this.validarData(dataSelecionada)) {
       this.dataInicioDisplay = dataSelecionada;
       const dataObj = this.parseDataDisplay(dataSelecionada);
       this.aluguelFormData.startPeriodStandRentals = this.formatarDataParaBackend(dataObj);
       this.calcularDatasETotal();
-    } else {
-      event.target.value = this.dataInicioDisplay;
     }
   }
 
@@ -482,15 +477,19 @@ export class StandsComponent implements OnInit {
         this.horarioInicio = planoSelecionado.rentalShift.startTimeRentalShifts;
         this.horarioFim = planoSelecionado.rentalShift.endTimeRentalShifts;
 
-        const dataInicio = new Date(this.aluguelFormData.startPeriodStandRentals);
+        const dataInicioSelecionada = new Date(this.aluguelFormData.startPeriodStandRentals);
+        
         const duracaoDias = planoSelecionado.rentalCategory.baseDurationInDaysRentalCategories - 1;
-        const dataTermino = new Date(dataInicio);
+        const dataTermino = new Date(dataInicioSelecionada);
         dataTermino.setDate(dataTermino.getDate() + duracaoDias);
 
         this.dataTermino = this.formatarDataParaDisplay(dataTermino);
 
-        this.aluguelFormData.startPeriodStandRentals = `${this.aluguelFormData.startPeriodStandRentals.split('T')[0]}T${this.horarioInicio}`;
-        this.aluguelFormData.endPeriodStandRentals = `${dataTermino.toISOString().split('T')[0]}T${this.horarioFim}`;
+        const dataInicioISO = dataInicioSelecionada.toISOString().split('T')[0];
+        const dataTerminoISO = dataTermino.toISOString().split('T')[0];
+        
+        this.aluguelFormData.startPeriodStandRentals = `${dataInicioISO}T${this.horarioInicio}`;
+        this.aluguelFormData.endPeriodStandRentals = `${dataTerminoISO}T${this.horarioFim}`;
 
         this.aluguelFormData.totalPriceStandRentals = planoSelecionado.priceRentalPlans;
       }
@@ -499,6 +498,15 @@ export class StandsComponent implements OnInit {
       this.horarioFim = '';
       this.dataTermino = '';
       this.aluguelFormData.totalPriceStandRentals = 0;
+      
+      if (idRentalPlans) {
+        const planoSelecionado = this.planosAluguel.find(p => p.idRentalPlans == idRentalPlans);
+        if (planoSelecionado) {
+          this.horarioInicio = planoSelecionado.rentalShift.startTimeRentalShifts;
+          this.horarioFim = planoSelecionado.rentalShift.endTimeRentalShifts;
+          this.aluguelFormData.totalPriceStandRentals = planoSelecionado.priceRentalPlans;
+        }
+      }
     }
   }
 
@@ -538,6 +546,10 @@ export class StandsComponent implements OnInit {
       }
       if (!planoSelecionado) {
         throw new Error('Plano de aluguel não encontrado');
+      }
+
+      if (!this.aluguelFormData.startPeriodStandRentals) {
+        throw new Error('Data de início é obrigatória');
       }
 
       const dadosAluguel = {
