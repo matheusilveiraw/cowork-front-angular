@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { DateFormatDirective } from '../../shared/directives/date-format.directive';
 import Swal from 'sweetalert2';
 
+// Interfaces
 interface Mesa {
   idDesks: number;
   numberDesks: number;
@@ -95,7 +96,7 @@ export class MesasComponent implements OnInit {
   mesaEditando: Mesa | null = null;
   mesaSelecionadaAluguel: Mesa | null = null;
 
-  //calendario
+  // Calendario
   abrirModalCalendario: boolean = false;
   mesaSelecionadaCalendario: Mesa | null = null;
   mesaCalendarioAtual: Mesa | null = null;
@@ -109,7 +110,6 @@ export class MesasComponent implements OnInit {
     nameDesks: ''
   };
 
-  // USAR STRINGS VAZIAS EM VEZ DE NULL PARA OS SELECTS
   aluguelFormData: any = {
     idDesks: '',
     idCustomers: '',
@@ -174,7 +174,6 @@ export class MesasComponent implements OnInit {
       const response = await this.http.get<ApiResponse>('http://localhost:8080/api/desks').toPromise();
       if (response) {
         this.mesas = response.data || [];
-        // Buscar status das mesas após carregar
         await this.buscarStatusMesas();
       }
     } catch (error: any) {
@@ -218,24 +217,21 @@ export class MesasComponent implements OnInit {
     }
   }
 
-  // ========== MÉTODOS DE STATUS DAS MESAS (ATUALIZADOS) ==========
+  // ========== MÉTODOS DE STATUS DAS MESAS ==========
 
   async buscarStatusMesas() {
     try {
-      // Buscar todos os aluguéis para verificar status
       const response = await this.http.get<ApiResponse>('http://localhost:8080/api/desk-rentals').toPromise();
 
       if (response && response.data) {
         this.alugueisAtivos = response.data;
         const agora = new Date();
 
-        // Para cada mesa, verificar se tem aluguel ativo
         this.mesas.forEach(mesa => {
           const alugueisMesa = this.alugueisAtivos.filter(aluguel =>
             aluguel.desk?.idDesks === mesa.idDesks
           );
 
-          // Encontrar aluguel ativo (que está em andamento)
           const aluguelAtivo = alugueisMesa.find(aluguel => {
             const inicio = new Date(aluguel.startPeriodDeskRentals);
             const fim = new Date(aluguel.endPeriodDeskRentals);
@@ -243,28 +239,23 @@ export class MesasComponent implements OnInit {
           });
 
           if (aluguelAtivo) {
-            // Mesa está ocupada
             mesa.status = 'occupied';
             mesa.currentRental = aluguelAtivo;
             mesa.nextAvailableDate = aluguelAtivo.endPeriodDeskRentals;
           } else {
-            // Mesa está disponível, verificar próxima disponibilidade
             mesa.status = 'available';
             mesa.currentRental = null;
 
-            // Buscar próximo aluguel futuro
             const alugueisFuturos = alugueisMesa.filter(aluguel =>
               new Date(aluguel.startPeriodDeskRentals) > agora
             );
 
             if (alugueisFuturos.length > 0) {
-              // Ordenar por data mais próxima
               const proximoAluguel = alugueisFuturos.sort((a, b) =>
                 new Date(a.startPeriodDeskRentals).getTime() - new Date(b.startPeriodDeskRentals).getTime()
               )[0];
               mesa.nextAvailableDate = proximoAluguel.startPeriodDeskRentals;
             } else {
-              // Sem aluguéis futuros - totalmente disponível
               mesa.nextAvailableDate = undefined;
             }
           }
@@ -272,7 +263,6 @@ export class MesasComponent implements OnInit {
       }
     } catch (error: any) {
       console.error('Erro ao buscar status das mesas:', error);
-      // Em caso de erro, definir todas como disponíveis
       this.mesas.forEach(mesa => {
         mesa.status = 'available';
         mesa.nextAvailableDate = undefined;
@@ -331,7 +321,7 @@ export class MesasComponent implements OnInit {
     return this.mesas.filter(mesa => this.estaDisponivel(mesa));
   }
 
-  // ========== MÉTODOS DO MODAL DE CADASTRO/EDIÇÃO ==========
+  // ========== MÉTODOS DOS MODAIS ==========
 
   abrirModalCadastro() {
     this.mesaEditando = null;
@@ -360,6 +350,61 @@ export class MesasComponent implements OnInit {
     };
     this.salvando = false;
   }
+
+  abrirModalAluguel(mesa: Mesa) {
+    if (!this.estaDisponivel(mesa)) {
+      this.showNotification('error', 'Esta mesa não está disponível para aluguel no momento.');
+      return;
+    }
+
+    this.mesaSelecionadaAluguel = { ...mesa };
+    this.inicializarFormAluguel();
+    this.abrirModalAluguelMesa = true;
+  }
+
+  abrirModalAluguelGeral() {
+    this.mesaSelecionadaAluguel = null;
+    this.inicializarFormAluguel();
+    this.abrirModalAluguelMesa = true;
+  }
+
+  inicializarFormAluguel() {
+    const hoje = new Date();
+    this.dataInicioDisplay = this.formatarDataParaDisplay(hoje);
+
+    this.aluguelFormData = {
+      idDesks: this.mesaSelecionadaAluguel?.idDesks?.toString() || '',
+      idCustomers: '',
+      idRentalPlans: '',
+      startPeriodDeskRentals: this.formatarDataParaBackend(hoje),
+      endPeriodDeskRentals: '',
+      totalPriceDeskRentals: 0
+    };
+
+    this.horarioInicio = '';
+    this.horarioFim = '';
+    this.dataTermino = '';
+  }
+
+  fecharModalAluguel() {
+    this.abrirModalAluguelMesa = false;
+    this.mesaSelecionadaAluguel = null;
+    this.aluguelFormData = {
+      idDesks: '',
+      idCustomers: '',
+      idRentalPlans: '',
+      startPeriodDeskRentals: '',
+      endPeriodDeskRentals: '',
+      totalPriceDeskRentals: 0
+    };
+    this.horarioInicio = '';
+    this.horarioFim = '';
+    this.dataTermino = '';
+    this.dataInicioDisplay = '';
+    this.salvandoAluguel = false;
+  }
+
+  // ========== MÉTODOS DE FORMULÁRIO ==========
 
   async salvarMesa() {
     if (this.salvando) return;
@@ -391,63 +436,6 @@ export class MesasComponent implements OnInit {
     }
   }
 
-  // ========== MÉTODOS DO MODAL OF ALUGUEL ==========
-
-  abrirModalAluguel(mesa: Mesa) {
-    if (!this.estaDisponivel(mesa)) {
-      this.showNotification('error', 'Esta mesa não está disponível para aluguel no momento.');
-      return;
-    }
-
-    this.mesaSelecionadaAluguel = { ...mesa };
-    this.inicializarFormAluguel();
-    this.abrirModalAluguelMesa = true;
-  }
-
-  abrirModalAluguelGeral() {
-    this.mesaSelecionadaAluguel = null;
-    this.inicializarFormAluguel();
-    this.abrirModalAluguelMesa = true;
-  }
-
-  inicializarFormAluguel() {
-    const hoje = new Date();
-    this.dataInicioDisplay = this.formatarDataParaDisplay(hoje);
-
-    // USAR STRINGS VAZIAS PARA OS SELECTS
-    this.aluguelFormData = {
-      idDesks: this.mesaSelecionadaAluguel?.idDesks?.toString() || '',
-      idCustomers: '',
-      idRentalPlans: '',
-      startPeriodDeskRentals: this.formatarDataParaBackend(hoje),
-      endPeriodDeskRentals: '',
-      totalPriceDeskRentals: 0
-    };
-
-    this.horarioInicio = '';
-    this.horarioFim = '';
-    this.dataTermino = '';
-  }
-
-  fecharModalAluguel() {
-    this.abrirModalAluguelMesa = false;
-    this.mesaSelecionadaAluguel = null;
-    // RESETAR PARA STRINGS VAZIAS
-    this.aluguelFormData = {
-      idDesks: '',
-      idCustomers: '',
-      idRentalPlans: '',
-      startPeriodDeskRentals: '',
-      endPeriodDeskRentals: '',
-      totalPriceDeskRentals: 0
-    };
-    this.horarioInicio = '';
-    this.horarioFim = '';
-    this.dataTermino = '';
-    this.dataInicioDisplay = '';
-    this.salvandoAluguel = false;
-  }
-
   onPlanoChange() {
     this.calcularDatasETotal();
   }
@@ -461,13 +449,11 @@ export class MesasComponent implements OnInit {
       this.aluguelFormData.startPeriodDeskRentals = this.formatarDataParaBackend(dataObj);
       this.calcularDatasETotal();
     } else {
-      // Se a data for inválida, manter a anterior
       event.target.value = this.dataInicioDisplay;
     }
   }
 
   validarData(data: string): boolean {
-    // Permite campo vazio durante a digitação
     if (!data || data === '') return true;
 
     const regex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
@@ -478,12 +464,10 @@ export class MesasComponent implements OnInit {
     const mesNum = parseInt(mes, 10);
     const anoNum = parseInt(ano, 10);
 
-    // Validações básicas
     if (diaNum < 1 || diaNum > 31) return false;
     if (mesNum < 1 || mesNum > 12) return false;
     if (anoNum < 1900 || anoNum > 2100) return false;
 
-    // Validação de fevereiro e meses com 30 dias
     const dataObj = new Date(anoNum, mesNum - 1, diaNum);
     return dataObj.getDate() === diaNum &&
       dataObj.getMonth() === mesNum - 1 &&
@@ -496,31 +480,25 @@ export class MesasComponent implements OnInit {
   }
 
   calcularDatasETotal() {
-    // CONVERTER PARA NUMBER QUANDO FOR USAR
     const idRentalPlans = this.aluguelFormData.idRentalPlans ? Number(this.aluguelFormData.idRentalPlans) : null;
 
     if (idRentalPlans && this.aluguelFormData.startPeriodDeskRentals) {
       const planoSelecionado = this.planosAluguel.find(p => p.idRentalPlans == idRentalPlans);
 
       if (planoSelecionado) {
-        // Definir horários baseados no turno
         this.horarioInicio = planoSelecionado.rentalShift.startTimeRentalShifts;
         this.horarioFim = planoSelecionado.rentalShift.endTimeRentalShifts;
 
-        // Calcular data de término
         const dataInicio = new Date(this.aluguelFormData.startPeriodDeskRentals);
         const duracaoDias = planoSelecionado.rentalCategory.baseDurationInDaysRentalCategories - 1;
         const dataTermino = new Date(dataInicio);
         dataTermino.setDate(dataTermino.getDate() + duracaoDias);
 
-        // Formatar para exibição
         this.dataTermino = this.formatarDataParaDisplay(dataTermino);
 
-        // Montar datas completas para envio
         this.aluguelFormData.startPeriodDeskRentals = `${this.aluguelFormData.startPeriodDeskRentals.split('T')[0]}T${this.horarioInicio}`;
         this.aluguelFormData.endPeriodDeskRentals = `${dataTermino.toISOString().split('T')[0]}T${this.horarioFim}`;
 
-        // Definir preço
         this.aluguelFormData.totalPriceDeskRentals = planoSelecionado.priceRentalPlans;
       }
     } else {
@@ -531,24 +509,12 @@ export class MesasComponent implements OnInit {
     }
   }
 
-  formatarDataParaDisplay(data: Date): string {
-    const dia = data.getDate().toString().padStart(2, '0');
-    const mes = (data.getMonth() + 1).toString().padStart(2, '0');
-    const ano = data.getFullYear();
-    return `${dia}/${mes}/${ano}`;
-  }
-
-  formatarDataParaBackend(data: Date): string {
-    return data.toISOString().split('T')[0]; // yyyy-MM-dd
-  }
-
   async salvarAluguel() {
     if (this.salvandoAluguel) return;
 
     this.salvandoAluguel = true;
 
     try {
-      // CONVERTER OS VALORES DE STRING PARA NUMBER ANTES DE ENVIAR
       const idDesks = this.mesaSelecionadaAluguel ?
         this.mesaSelecionadaAluguel.idDesks :
         Number(this.aluguelFormData.idDesks);
@@ -568,8 +534,6 @@ export class MesasComponent implements OnInit {
       this.showNotification('success', message);
 
       this.fecharModalAluguel();
-
-      // Atualizar status das mesas após novo aluguel
       await this.buscarMesas();
 
     } catch (error: any) {
@@ -624,6 +588,17 @@ export class MesasComponent implements OnInit {
       const errorMessage = error.error?.message || error.message || 'Erro ao excluir mesa';
       this.showNotification('error', errorMessage);
     }
+  }
+
+  formatarDataParaDisplay(data: Date): string {
+    const dia = data.getDate().toString().padStart(2, '0');
+    const mes = (data.getMonth() + 1).toString().padStart(2, '0');
+    const ano = data.getFullYear();
+    return `${dia}/${mes}/${ano}`;
+  }
+
+  formatarDataParaBackend(data: Date): string {
+    return data.toISOString().split('T')[0];
   }
 
   // ========== MÉTODOS DO CALENDÁRIO ==========
@@ -754,9 +729,9 @@ export class MesasComponent implements OnInit {
     if (!turno) return 'bg-secondary';
 
     const cores: { [key: string]: string } = {
-      '1': 'bg-warning',    // Manhã
-      '2': 'bg-info',       // Tarde
-      '3': 'bg-primary',    // Dia Todo
+      '1': 'bg-warning',
+      '2': 'bg-info',
+      '3': 'bg-primary',
       'Manhã': 'bg-warning',
       'Tarde': 'bg-info',
       'Dia Todo': 'bg-primary',
