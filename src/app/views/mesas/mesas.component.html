@@ -285,22 +285,6 @@
             </div>
           </div>
 
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Data de Término</label>
-              <div class="form-control-plaintext border rounded p-2 bg-light">
-                {{ dataTermino || 'Selecione um plano' }}
-              </div>
-            </div>
-
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Horário de Término</label>
-              <div class="form-control-plaintext border rounded p-2 bg-light">
-                {{ horarioFim || 'Selecione um plano' }}
-              </div>
-            </div>
-          </div>
-
           <!-- Resumo do Aluguel -->
           <div class="alert alert-success" *ngIf="aluguelFormData.totalPriceDeskRentals > 0">
             <div class="d-flex justify-content-between">
@@ -308,7 +292,6 @@
               <strong>R$ {{ aluguelFormData.totalPriceDeskRentals }}</strong>
             </div>
           </div>
-
         </div>
 
         <!-- Footer do Modal -->
@@ -326,7 +309,6 @@
   </div>
 </div>
 
-<!-- Modal de Calendário -->
 <div class="modal-backdrop fade show" *ngIf="abrirModalCalendario"></div>
 
 <div class="modal fade show d-block" *ngIf="abrirModalCalendario" tabindex="-1" role="dialog">
@@ -341,7 +323,6 @@
       </div>
 
       <div class="modal-body">
-        <!-- Seleção de Mesa -->
         <div class="mb-4">
           <label for="mesaCalendarioSelect" class="form-label">Selecionar Mesa</label>
           <select class="form-select" id="mesaCalendarioSelect" (change)="mudarMesaCalendario($event)"
@@ -353,7 +334,6 @@
           </select>
         </div>
 
-        <!-- Loading do Calendário -->
         <div *ngIf="loadingCalendario" class="text-center py-3">
           <div class="spinner-border spinner-border-sm text-primary" role="status">
             <span class="visually-hidden">Carregando...</span>

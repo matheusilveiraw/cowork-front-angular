@@ -542,46 +542,57 @@ export class MesasComponent implements OnInit {
     return data.toISOString().split('T')[0]; // yyyy-MM-dd
   }
 
-  async salvarAluguel() {
-    if (this.salvandoAluguel) return;
+async salvarAluguel() {
+  if (this.salvandoAluguel) return;
 
-    this.salvandoAluguel = true;
+  this.salvandoAluguel = true;
 
-    try {
-      // CONVERTER OS VALORES DE STRING PARA NUMBER ANTES DE ENVIAR
-      const idDesks = this.mesaSelecionadaAluguel ?
-        this.mesaSelecionadaAluguel.idDesks :
-        Number(this.aluguelFormData.idDesks);
+  try {
+    const idDesks = this.mesaSelecionadaAluguel ?
+      this.mesaSelecionadaAluguel.idDesks :
+      Number(this.aluguelFormData.idDesks);
 
-      const dadosAluguel = {
-        idDesks: idDesks,
-        idCustomers: Number(this.aluguelFormData.idCustomers),
-        idRentalPlans: Number(this.aluguelFormData.idRentalPlans),
-        startPeriodDeskRentals: this.aluguelFormData.startPeriodDeskRentals,
-        endPeriodDeskRentals: this.aluguelFormData.endPeriodDeskRentals,
-        totalPriceDeskRentals: this.aluguelFormData.totalPriceDeskRentals
-      };
+    // Converter data do formato brasileiro para o formato da API
+    const dataInicioAPI = this.converterDataParaAPI(this.dataInicioDisplay);
+    
+    // Combinar data com horário de início
+    const startPeriodCompleto = `${dataInicioAPI}T${this.horarioInicio}`;
+    const endPeriodCompleto = this.aluguelFormData.endPeriodDeskRentals;
 
-      const response = await this.http.post('http://localhost:8080/api/desk-rentals', dadosAluguel).toPromise();
+    const dadosAluguel = {
+      idDesks: idDesks,
+      idCustomers: Number(this.aluguelFormData.idCustomers),
+      idRentalPlans: Number(this.aluguelFormData.idRentalPlans),
+      startPeriodDeskRentals: startPeriodCompleto,
+      endPeriodDeskRentals: endPeriodCompleto,
+      totalPriceDeskRentals: this.aluguelFormData.totalPriceDeskRentals
+    };
 
-      const message = (response as any)?.message || 'Aluguel realizado com sucesso!';
-      this.showNotification('success', message);
+    console.log('Dados enviados para API:', dadosAluguel); // Para debug
 
-      this.fecharModalAluguel();
+    const response = await this.http.post('http://localhost:8080/api/desk-rentals', dadosAluguel).toPromise();
 
-      // Atualizar status das mesas após novo aluguel
-      await this.buscarMesas();
+    const message = (response as any)?.message || 'Aluguel realizado com sucesso!';
+    this.showNotification('success', message);
 
-    } catch (error: any) {
-      console.error('Erro ao realizar aluguel:', error);
-      const errorMessage = error.error?.message || error.message || 'Erro ao realizar aluguel';
-      this.showNotification('error', errorMessage);
-    } finally {
-      this.salvandoAluguel = false;
-    }
+    this.fecharModalAluguel();
+    await this.buscarMesas();
+
+  } catch (error: any) {
+    console.error('Erro ao realizar aluguel:', error);
+    const errorMessage = error.error?.message || error.message || 'Erro ao realizar aluguel';
+    this.showNotification('error', errorMessage);
+  } finally {
+    this.salvandoAluguel = false;
   }
+}
 
-  // ========== MÉTODOS AUXILIARES ==========
+converterDataParaAPI(dataBR: string): string {
+  if (!dataBR) return '';
+  
+  const [dia, mes, ano] = dataBR.split('/');
+  return `${ano}-${mes}-${dia}`;
+}
 
   abrirModalCliente() {
     this.showNotification('info', 'Funcionalidade de cadastro de cliente será implementada em breve');
