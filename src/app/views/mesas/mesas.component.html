@@ -52,9 +52,7 @@
     <!-- Grid de Mesas -->
     <div class="row" *ngIf="!loading && mesas.length > 0">
       <div class="col-lg-3 col-md-4 col-sm-6 mb-4" *ngFor="let mesa of mesas">
-
         <div class="mesa-card">
-
           <!-- Header da Mesa -->
           <div class="mesa-header">
             <div class="mesa-numero">
@@ -123,20 +121,6 @@
     </div>
   </div>
 </div>
-
-<!-- Modal de Cadastro/Edição de Mesa -->
-<div class="modal-backdrop fade show" *ngIf="abrirModalCadastroMesa"></div>
-
-<div class="modal fade show d-block" *ngIf="abrirModalCadastroMesa" tabindex="-1" role="dialog">
-  <div class="modal-dialog modal-dialog-centered" role="document">
-    <div class="modal-content">
-      <!-- Header do Modal -->
-      <div class="modal-header">
-        <h5 class="modal-title">
-          {{ mesaEditando ? 'Editar Mesa' : 'Nova Mesa' }}
-        </h5>
-        <button type="button" class="btn-close" (click)="fecharModalCadastro()" aria-label="Close"></button>
-      </div>
 
       <!-- Formulário -->
       <form (ngSubmit)="salvarMesa()" #mesaForm="ngForm">
