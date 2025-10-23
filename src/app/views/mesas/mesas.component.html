@@ -122,6 +122,20 @@
   </div>
 </div>
 
+<!-- Modal de Cadastro de Mesa -->
+<div class="modal-backdrop fade show" *ngIf="abrirModalCadastroMesa"></div>
+
+<div class="modal fade show d-block" *ngIf="abrirModalCadastroMesa" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <!-- Header do Modal -->
+      <div class="modal-header">
+        <h5 class="modal-title">
+          {{ mesaEditando ? 'Editar Mesa' : 'Nova Mesa' }}
+        </h5>
+        <button type="button" class="btn-close" (click)="fecharModalCadastro()" aria-label="Close"></button>
+      </div>
+
       <!-- Formulário -->
       <form (ngSubmit)="salvarMesa()" #mesaForm="ngForm">
         <div class="modal-body">
@@ -252,7 +266,7 @@
             <div class="col-md-6 mb-3">
               <label for="dataInicio" class="form-label">Data de Início *</label>
               <input type="text" class="form-control" id="dataInicio" name="dataInicioDisplay"
-                [(ngModel)]="dataInicioDisplay" required appDateFormat (ngModelChange)="onDataInicioChange($event)"
+                [(ngModel)]="dataInicioDisplay" required (ngModelChange)="onDataInicioChange($event)"
                 placeholder="DD/MM/AAAA" #dataInicio="ngModel" maxlength="10">
               <div *ngIf="dataInicio.invalid && dataInicio.touched" class="text-danger">
                 <small *ngIf="dataInicio.errors?.['required']">Data de início é obrigatória</small>
@@ -293,6 +307,7 @@
   </div>
 </div>
 
+<!-- Modal de Calendário -->
 <div class="modal-backdrop fade show" *ngIf="abrirModalCalendario"></div>
 
 <div class="modal fade show d-block" *ngIf="abrirModalCalendario" tabindex="-1" role="dialog">
