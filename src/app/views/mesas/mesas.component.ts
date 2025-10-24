@@ -793,10 +793,10 @@ async salvarAluguel() {
     return tooltip.trim();
   }
 
+  // MÉTODO CORRIGIDO - APENAS ISSO FOI ALTERADO
   getClasseTurno(turnoNome: string): string {
-    const baseClass = 'shift-badge ';
     const cor = this.getCorTurno(turnoNome);
-    return baseClass + cor;
+    return cor;
   }
 
   getAbreviacaoTurno(turnoNome: string): string {
