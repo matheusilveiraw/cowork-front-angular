@@ -318,7 +318,7 @@ export class MesasComponent implements OnInit {
   }
 
   get mesasDisponiveis(): Mesa[] {
-    return this.mesas.filter(mesa => this.estaDisponivel(mesa));
+    return this.mesas; // REMOVIDO: .filter(mesa => this.estaDisponivel(mesa)) - agora mostra todas as mesas
   }
 
   // ========== MÉTODOS DOS MODAIS ==========
@@ -352,11 +352,7 @@ export class MesasComponent implements OnInit {
   }
 
   abrirModalAluguel(mesa: Mesa) {
-    if (!this.estaDisponivel(mesa)) {
-      this.showNotification('error', 'Esta mesa não está disponível para aluguel no momento.');
-      return;
-    }
-
+    // REMOVIDO: Verificação de disponibilidade - sempre permite abrir o modal
     this.mesaSelecionadaAluguel = { ...mesa };
     this.inicializarFormAluguel();
     this.abrirModalAluguelMesa = true;
@@ -512,54 +508,54 @@ export class MesasComponent implements OnInit {
   async salvarAluguel() {
     if (this.salvandoAluguel) return;
 
-  this.salvandoAluguel = true;
+    this.salvandoAluguel = true;
 
-  try {
-    const idDesks = this.mesaSelecionadaAluguel ?
-      this.mesaSelecionadaAluguel.idDesks :
-      Number(this.aluguelFormData.idDesks);
+    try {
+      const idDesks = this.mesaSelecionadaAluguel ?
+        this.mesaSelecionadaAluguel.idDesks :
+        Number(this.aluguelFormData.idDesks);
 
-    // Converter data do formato brasileiro para o formato da API
-    const dataInicioAPI = this.converterDataParaAPI(this.dataInicioDisplay);
-    
-    // Combinar data com horário de início
-    const startPeriodCompleto = `${dataInicioAPI}T${this.horarioInicio}`;
-    const endPeriodCompleto = this.aluguelFormData.endPeriodDeskRentals;
+      // Converter data do formato brasileiro para o formato da API
+      const dataInicioAPI = this.converterDataParaAPI(this.dataInicioDisplay);
+      
+      // Combinar data com horário de início
+      const startPeriodCompleto = `${dataInicioAPI}T${this.horarioInicio}`;
+      const endPeriodCompleto = this.aluguelFormData.endPeriodDeskRentals;
 
-    const dadosAluguel = {
-      idDesks: idDesks,
-      idCustomers: Number(this.aluguelFormData.idCustomers),
-      idRentalPlans: Number(this.aluguelFormData.idRentalPlans),
-      startPeriodDeskRentals: startPeriodCompleto,
-      endPeriodDeskRentals: endPeriodCompleto,
-      totalPriceDeskRentals: this.aluguelFormData.totalPriceDeskRentals
-    };
+      const dadosAluguel = {
+        idDesks: idDesks,
+        idCustomers: Number(this.aluguelFormData.idCustomers),
+        idRentalPlans: Number(this.aluguelFormData.idRentalPlans),
+        startPeriodDeskRentals: startPeriodCompleto,
+        endPeriodDeskRentals: endPeriodCompleto,
+        totalPriceDeskRentals: this.aluguelFormData.totalPriceDeskRentals
+      };
 
-    console.log('Dados enviados para API:', dadosAluguel); // Para debug
+      console.log('Dados enviados para API:', dadosAluguel); // Para debug
 
-    const response = await this.http.post('http://localhost:8080/api/desk-rentals', dadosAluguel).toPromise();
+      const response = await this.http.post('http://localhost:8080/api/desk-rentals', dadosAluguel).toPromise();
 
-    const message = (response as any)?.message || 'Aluguel realizado com sucesso!';
-    this.showNotification('success', message);
+      const message = (response as any)?.message || 'Aluguel realizado com sucesso!';
+      this.showNotification('success', message);
 
-    this.fecharModalAluguel();
-    await this.buscarMesas();
+      this.fecharModalAluguel();
+      await this.buscarMesas();
 
-  } catch (error: any) {
-    console.error('Erro ao realizar aluguel:', error);
-    const errorMessage = error.error?.message || error.message || 'Erro ao realizar aluguel';
-    this.showNotification('error', errorMessage);
-  } finally {
-    this.salvandoAluguel = false;
+    } catch (error: any) {
+      console.error('Erro ao realizar aluguel:', error);
+      const errorMessage = error.error?.message || error.message || 'Erro ao realizar aluguel';
+      this.showNotification('error', errorMessage);
+    } finally {
+      this.salvandoAluguel = false;
+    }
   }
-}
 
-converterDataParaAPI(dataBR: string): string {
-  if (!dataBR) return '';
-  
-  const [dia, mes, ano] = dataBR.split('/');
-  return `${ano}-${mes}-${dia}`;
-}
+  converterDataParaAPI(dataBR: string): string {
+    if (!dataBR) return '';
+    
+    const [dia, mes, ano] = dataBR.split('/');
+    return `${ano}-${mes}-${dia}`;
+  }
 
   abrirModalCliente() {
     this.showNotification('info', 'Funcionalidade de cadastro de cliente será implementada em breve');

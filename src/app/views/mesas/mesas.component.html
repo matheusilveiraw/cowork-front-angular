@@ -76,10 +76,10 @@
 
           <!-- Ações da Mesa -->
           <div class="mesa-actions">
+            <!-- REMOVIDO: [disabled]="!estaDisponivel(mesa)" - botão sempre habilitado -->
             <button class="btn btn-success btn-sm btn-icon" 
                     (click)="abrirModalAluguel(mesa)" 
-                    title="Alugar mesa"
-                    [disabled]="!estaDisponivel(mesa)">
+                    title="Alugar mesa">
               Alugar
             </button>
 
@@ -200,7 +200,8 @@
             <select class="form-select" id="mesaSelect" name="idDesks" [(ngModel)]="aluguelFormData.idDesks" required
               #mesaSelect="ngModel">
               <option value="">Selecione uma mesa</option>
-              <option *ngFor="let mesa of mesasDisponiveis" [value]="mesa.idDesks">
+              <!-- REMOVIDO: mesasDisponiveis - agora mostra todas as mesas -->
+              <option *ngFor="let mesa of mesas" [value]="mesa.idDesks">
                 Mesa {{ mesa.numberDesks }} - {{ mesa.nameDesks || 'Sem nome' }}
               </option>
             </select>
