@@ -436,16 +436,33 @@ export class MesasComponent implements OnInit {
     this.calcularDatasETotal();
   }
 
-  onDataInicioChange(event: any) {
-    const dataSelecionada = event.target.value;
+  // NOVO MÉTODO: Máscara automática de data
+  onDataInicioInput(event: any) {
+    let valor = event.target.value.replace(/\D/g, ''); // Remove tudo que não é número
+    
+    // Aplica a máscara automaticamente
+    if (valor.length > 2 && valor.length <= 4) {
+      valor = valor.substring(0, 2) + '/' + valor.substring(2);
+    } else if (valor.length > 4) {
+      valor = valor.substring(0, 2) + '/' + valor.substring(2, 4) + '/' + valor.substring(4, 8);
+    }
+    
+    // Atualiza o valor no campo
+    event.target.value = valor;
+    this.dataInicioDisplay = valor;
+    
+    // Valida e processa a data se estiver completa
+    if (this.validarData(valor)) {
+      this.onDataInicioChange(valor);
+    }
+  }
 
-    if (this.validarData(dataSelecionada)) {
-      this.dataInicioDisplay = dataSelecionada;
-      const dataObj = this.parseDataDisplay(dataSelecionada);
+  onDataInicioChange(novaData: string) {
+    if (this.validarData(novaData)) {
+      this.dataInicioDisplay = novaData;
+      const dataObj = this.parseDataDisplay(novaData);
       this.aluguelFormData.startPeriodDeskRentals = this.formatarDataParaBackend(dataObj);
       this.calcularDatasETotal();
-    } else {
-      event.target.value = this.dataInicioDisplay;
     }
   }
 
@@ -670,7 +687,6 @@ export class MesasComponent implements OnInit {
     const primeiroDia = new Date(year, month, 1);
     const ultimoDia = new Date(year, month + 1, 0);
 
-
     const diasVaziosInicio = primeiroDia.getDay();
 
     const dias: (Date | null)[] = [];
@@ -817,7 +833,7 @@ export class MesasComponent implements OnInit {
   formatarHora(hora: string): string {
     if (!hora) return '';
 
-    return hora.substring(0, 5); 
+    return hora.substring(0, 5);
   }
 
   testarAbreviacoesDinamicas() {

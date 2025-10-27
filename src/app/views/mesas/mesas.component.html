@@ -262,13 +262,14 @@
             <div class="col-md-6 mb-3">
               <label for="dataInicio" class="form-label">Data de Início *</label>
               <input type="text" class="form-control" id="dataInicio" name="dataInicioDisplay"
-                [(ngModel)]="dataInicioDisplay" required (ngModelChange)="onDataInicioChange($event)"
-                placeholder="DD/MM/AAAA" #dataInicio="ngModel" maxlength="10">
+                [(ngModel)]="dataInicioDisplay" (input)="onDataInicioInput($event)" placeholder="DD/MM/AAAA"
+                #dataInicio="ngModel" maxlength="10">
               <div *ngIf="dataInicio.invalid && dataInicio.touched" class="text-danger">
                 <small *ngIf="dataInicio.errors?.['required']">Data de início é obrigatória</small>
                 <small>Formato deve ser DD/MM/AAAA</small>
               </div>
-              <div class="form-text">Digite a data no formato DD/MM/AAAA</div>
+              <div class="form-text">Digite a data no formato DD/MM/AAAA (as barras serão inseridas automaticamente)
+              </div>
             </div>
 
             <div class="col-md-6 mb-3">
@@ -278,7 +279,7 @@
               </div>
             </div>
           </div>
-
+          
           <!-- Resumo do Aluguel -->
           <div class="alert alert-success" *ngIf="aluguelFormData.totalPriceDeskRentals > 0">
             <div class="d-flex justify-content-between">
