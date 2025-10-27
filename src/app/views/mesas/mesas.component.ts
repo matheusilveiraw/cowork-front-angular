@@ -727,54 +727,35 @@ export class MesasComponent implements OnInit {
     return turnosOcupados;
   }
 
-  // NO FINAL DO COMPONENT, SUBSTITUA OS MÉTODOS DE TURNO:
+  // ========== MÉTODOS DINÂMICOS PARA TURNOS ==========
 
   getCorTurno(turnoNome: string): string {
     const turno = this.turnos.find(t => t.nameRentalShifts === turnoNome);
 
-    if (!turno) return 'bg-secondary';
+    if (!turno) return 'bg-secondary text-white';
 
-    // Cores pré-definidas baseadas no ID ou nome do turno
-    const cores: { [key: string]: string } = {
-      '1': 'bg-warning text-dark',      // Manhã
-      '2': 'bg-info text-white',        // Tarde  
-      '3': 'bg-primary text-white',     // Dia Todo
-      '4': 'bg-dark text-white',        // Noite
-      '5': 'bg-success text-white',     // Madrugada
-      '6': 'bg-danger text-white',      // Integral
-      'Manhã': 'bg-warning text-dark',
-      'Tarde': 'bg-info text-white',
-      'Dia Todo': 'bg-primary text-white',
-      'Noite': 'bg-dark text-white',
-      'Madrugada': 'bg-success text-white',
-      'Integral': 'bg-danger text-white'
-    };
-
-    // Se não encontrar pelo nome, usa o ID
-    return cores[turno.idRentalShifts.toString()] || cores[turnoNome] || this.gerarCorAleatoria(turnoNome);
+    return this.gerarCorPorId(turno.idRentalShifts);
   }
 
-  // NOVO MÉTODO: Gerar cor aleatória baseada no nome do turno
-  private gerarCorAleatoria(turnoNome: string): string {
-    // Lista de cores Bootstrap para fallback
+  private gerarCorPorId(idTurno: number): string {
     const coresBootstrap = [
       'bg-primary text-white',
-      'bg-secondary text-white',
       'bg-success text-white',
-      'bg-danger text-white',
-      'bg-warning text-dark',
       'bg-info text-white',
+      'bg-warning text-dark',
+      'bg-danger text-white',
+      'bg-secondary text-white',
       'bg-dark text-white',
-      'bg-light text-dark'
+      'bg-light text-dark',
+      'bg-primary text-white',
+      'bg-success text-white',
+      'bg-info text-white',
+      'bg-warning text-dark',
+      'bg-danger text-white',
+      'bg-secondary text-white'
     ];
 
-    // Gera um índice baseado no nome do turno para ser consistente
-    let hash = 0;
-    for (let i = 0; i < turnoNome.length; i++) {
-      hash = turnoNome.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const index = Math.abs(hash) % coresBootstrap.length;
-
+    const index = (idTurno - 1) % coresBootstrap.length;
     return coresBootstrap[index];
   }
 
@@ -782,41 +763,74 @@ export class MesasComponent implements OnInit {
     const turno = this.turnos.find(t => t.nameRentalShifts === turnoNome);
 
     if (!turno) {
-      // Fallback: pega as iniciais do nome fornecido
       return this.gerarAbreviacao(turnoNome);
     }
 
     return this.gerarAbreviacao(turno.nameRentalShifts);
   }
 
-  // NOVO MÉTODO: Gera abreviação inteligente
   private gerarAbreviacao(nomeTurno: string): string {
     if (!nomeTurno || nomeTurno.trim() === '') return '??';
 
     const nomeLimpo = nomeTurno.trim();
-    const palavras = nomeLimpo.split(' ').filter(palavra => palavra.length > 0);
+
+    const nomeSanitizado = nomeLimpo.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
+    const palavras = nomeSanitizado.split(' ').filter(palavra => palavra.length > 0);
 
     if (palavras.length === 0) return '??';
 
     if (palavras.length === 1) {
-      // Uma palavra: pega primeira e segunda letra
+      // Uma palavra: pega primeira e segunda letra (se disponível)
       const palavra = palavras[0];
       if (palavra.length >= 2) {
         return palavra.substring(0, 2).toUpperCase();
       } else {
-        return (palavra + ' ').substring(0, 2).toUpperCase();
+        return (palavra + palavra).toUpperCase();
       }
     } else {
-      // Múltiplas palavras: pega primeira letra de cada
-      return palavras.map(palavra => palavra.charAt(0).toUpperCase()).join('');
+      const iniciais = palavras.map(palavra => palavra.charAt(0).toUpperCase());
+      return iniciais.slice(0, 3).join('');
     }
   }
 
   getDescricaoTurno(turnoNome: string): string {
     const turno = this.turnos.find(t => t.nameRentalShifts === turnoNome);
-    return turno ?
-      `${turno.nameRentalShifts} (${turno.startTimeRentalShifts} às ${turno.endTimeRentalShifts})` :
-      turnoNome;
+
+    if (!turno) {
+      return turnoNome;
+    }
+
+    // Formata a descrição com horários, se disponíveis
+    let descricao = turno.nameRentalShifts;
+
+    if (turno.startTimeRentalShifts && turno.endTimeRentalShifts) {
+      descricao += ` (${this.formatarHora(turno.startTimeRentalShifts)} às ${this.formatarHora(turno.endTimeRentalShifts)})`;
+    }
+
+    if (turno.descriptionRentalShifts) {
+      descricao += ` - ${turno.descriptionRentalShifts}`;
+    }
+
+    return descricao;
+  }
+
+  private formatarHora(hora: string): string {
+    if (!hora) return '';
+
+    return hora.substring(0, 5);
+  }
+
+  testarAbreviacoesDinamicas() {
+    const testes = [
+      'Manhã', 'Tarde', 'Dia Todo', 'Noite', 'Morning', 'Afternoon',
+      'Evening', 'Night', 'Full Day', 'Meio Período', 'Integral',
+      'Turno da Manhã', 'Período Noturno Completo', 'A', 'B', '早班', '晚班'
+    ];
+
+    console.log('=== TESTE DE ABREVIAÇÕES DINÂMICAS ===');
+    testes.forEach(teste => {
+      console.log(`"${teste}" → "${this.gerarAbreviacao(teste)}"`);
+    });
   }
 
   ehHoje(data: Date): boolean {
