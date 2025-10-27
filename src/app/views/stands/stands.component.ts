@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { DateFormatDirective } from '../../shared/directives/date-format.directive';
 import Swal from 'sweetalert2';
 
+// Interfaces
 interface Stand {
   idStands: number;
   numberStands: number;
@@ -114,7 +115,6 @@ export class StandsComponent implements OnInit {
     idCustomers: '',
     idRentalPlans: '',
     startPeriodStandRentals: '',
-    endPeriodStandRentals: '',
     totalPriceStandRentals: 0
   };
 
@@ -315,11 +315,7 @@ export class StandsComponent implements OnInit {
     return this.stands.filter(stand => stand.status === 'occupied').length;
   }
 
-  get standsDisponiveis(): Stand[] {
-    return this.stands.filter(stand => this.estaDisponivel(stand));
-  }
-
-  // ========== MÉTODOS DO MODAL DE CADASTRO/EDIÇÃO ==========
+  // ========== MÉTODOS DOS MODAIS ==========
 
   abrirModalCadastro() {
     this.standEditando = null;
@@ -348,6 +344,54 @@ export class StandsComponent implements OnInit {
     };
     this.salvando = false;
   }
+
+  abrirModalAluguel(stand: Stand) {
+    this.standSelecionadoAluguel = { ...stand };
+    this.inicializarFormAluguel();
+    this.abrirModalAluguelStand = true;
+  }
+
+  abrirModalAluguelGeral() {
+    this.standSelecionadoAluguel = null;
+    this.inicializarFormAluguel();
+    this.abrirModalAluguelStand = true;
+  }
+
+  inicializarFormAluguel() {
+    const hoje = new Date();
+    this.dataInicioDisplay = this.formatarDataParaDisplay(hoje);
+
+    this.aluguelFormData = {
+      idStands: this.standSelecionadoAluguel?.idStands?.toString() || '',
+      idCustomers: '',
+      idRentalPlans: '',
+      startPeriodStandRentals: hoje.toISOString().split('T')[0],
+      totalPriceStandRentals: 0
+    };
+
+    this.horarioInicio = '';
+    this.horarioFim = '';
+    this.dataTermino = '';
+  }
+
+  fecharModalAluguel() {
+    this.abrirModalAluguelStand = false;
+    this.standSelecionadoAluguel = null;
+    this.aluguelFormData = {
+      idStands: '',
+      idCustomers: '',
+      idRentalPlans: '',
+      startPeriodStandRentals: '',
+      totalPriceStandRentals: 0
+    };
+    this.horarioInicio = '';
+    this.horarioFim = '';
+    this.dataTermino = '';
+    this.dataInicioDisplay = '';
+    this.salvandoAluguel = false;
+  }
+
+  // ========== MÉTODOS DE FORMULÁRIO ==========
 
   async salvarStand() {
     if (this.salvando) return;
@@ -379,63 +423,32 @@ export class StandsComponent implements OnInit {
     }
   }
 
-  // ========== MÉTODOS DO MODAL DE ALUGUEL ==========
-
-  abrirModalAluguel(stand: Stand) {
-    this.standSelecionadoAluguel = { ...stand };
-    this.inicializarFormAluguel();
-    this.abrirModalAluguelStand = true;
-  }
-
-  abrirModalAluguelGeral() {
-    this.standSelecionadoAluguel = null;
-    this.inicializarFormAluguel();
-    this.abrirModalAluguelStand = true;
-  }
-
-  inicializarFormAluguel() {
-    this.dataInicioDisplay = '';
-    this.aluguelFormData = {
-      idStands: this.standSelecionadoAluguel?.idStands?.toString() || '',
-      idCustomers: '',
-      idRentalPlans: '',
-      startPeriodStandRentals: '',
-      endPeriodStandRentals: '',
-      totalPriceStandRentals: 0
-    };
-
-    this.horarioInicio = '';
-    this.horarioFim = '';
-    this.dataTermino = '';
-  }
-
-  fecharModalAluguel() {
-    this.abrirModalAluguelStand = false;
-    this.standSelecionadoAluguel = null;
-    this.aluguelFormData = {
-      idStands: '',
-      idCustomers: '',
-      idRentalPlans: '',
-      startPeriodStandRentals: '',
-      endPeriodStandRentals: '',
-      totalPriceStandRentals: 0
-    };
-    this.horarioInicio = '';
-    this.horarioFim = '';
-    this.dataTermino = '';
-    this.dataInicioDisplay = '';
-    this.salvandoAluguel = false;
-  }
-
   onPlanoChange() {
     this.calcularDatasETotal();
   }
 
-  onDataInicioChange(dataSelecionada: string) {
-    if (this.validarData(dataSelecionada)) {
-      this.dataInicioDisplay = dataSelecionada;
-      const dataObj = this.parseDataDisplay(dataSelecionada);
-      this.aluguelFormData.startPeriodStandRentals = this.formatarDataParaBackend(dataObj);
+  onDataInicioInput(event: any) {
+    let valor = event.target.value.replace(/\D/g, '');
+    
+    if (valor.length > 2 && valor.length <= 4) {
+      valor = valor.substring(0, 2) + '/' + valor.substring(2);
+    } else if (valor.length > 4) {
+      valor = valor.substring(0, 2) + '/' + valor.substring(2, 4) + '/' + valor.substring(4, 8);
+    }
+    
+    event.target.value = valor;
+    this.dataInicioDisplay = valor;
+    
+    if (this.validarData(valor)) {
+      this.onDataInicioChange(valor);
+    }
+  }
+
+  onDataInicioChange(novaData: string) {
+    if (this.validarData(novaData)) {
+      this.dataInicioDisplay = novaData;
+      const dataObj = this.parseDataDisplay(novaData);
+      this.aluguelFormData.startPeriodStandRentals = dataObj.toISOString().split('T')[0];
       this.calcularDatasETotal();
     }
   }
@@ -476,55 +489,25 @@ export class StandsComponent implements OnInit {
         this.horarioInicio = planoSelecionado.rentalShift.startTimeRentalShifts;
         this.horarioFim = planoSelecionado.rentalShift.endTimeRentalShifts;
 
-        const dataInicioSelecionada = new Date(this.aluguelFormData.startPeriodStandRentals);
-        
+        const dataInicio = new Date(this.aluguelFormData.startPeriodStandRentals);
         const duracaoDias = planoSelecionado.rentalCategory.baseDurationInDaysRentalCategories;
-        const dataTermino = new Date(dataInicioSelecionada);
-        dataTermino.setDate(dataTermino.getDate() + duracaoDias - 1); // Subtrair 1 para incluir o dia inicial
+        const dataTermino = new Date(dataInicio);
+        dataTermino.setDate(dataTermino.getDate() + duracaoDias - 1);
 
         this.dataTermino = this.formatarDataParaDisplay(dataTermino);
 
-        const dataInicioISO = dataInicioSelecionada.toISOString().split('T')[0];
-        const dataTerminoISO = dataTermino.toISOString().split('T')[0];
-        
+        // CORREÇÃO: Formatar data corretamente para o backend
+        const dataInicioISO = dataInicio.toISOString().split('T')[0];
         this.aluguelFormData.startPeriodStandRentals = `${dataInicioISO}T${this.horarioInicio}`;
-        this.aluguelFormData.endPeriodStandRentals = `${dataTerminoISO}T${this.horarioFim}`;
-
+        
         this.aluguelFormData.totalPriceStandRentals = planoSelecionado.priceRentalPlans;
-
-        console.log('Cálculo de datas:', {
-          dataInicio: this.dataInicioDisplay,
-          dataTermino: this.dataTermino,
-          duracaoDias: duracaoDias,
-          plano: planoSelecionado.planNameRentalPlans
-        });
       }
     } else {
       this.horarioInicio = '';
       this.horarioFim = '';
       this.dataTermino = '';
       this.aluguelFormData.totalPriceStandRentals = 0;
-      
-      if (idRentalPlans) {
-        const planoSelecionado = this.planosAluguel.find(p => p.idRentalPlans == idRentalPlans);
-        if (planoSelecionado) {
-          this.horarioInicio = planoSelecionado.rentalShift.startTimeRentalShifts;
-          this.horarioFim = planoSelecionado.rentalShift.endTimeRentalShifts;
-          this.aluguelFormData.totalPriceStandRentals = planoSelecionado.priceRentalPlans;
-        }
-      }
     }
-  }
-
-  formatarDataParaDisplay(data: Date): string {
-    const dia = data.getDate().toString().padStart(2, '0');
-    const mes = (data.getMonth() + 1).toString().padStart(2, '0');
-    const ano = data.getFullYear();
-    return `${dia}/${mes}/${ano}`;
-  }
-
-  formatarDataParaBackend(data: Date): string {
-    return data.toISOString().split('T')[0];
   }
 
   async salvarAluguel() {
@@ -540,34 +523,27 @@ export class StandsComponent implements OnInit {
       const idCustomers = Number(this.aluguelFormData.idCustomers);
       const idRentalPlans = Number(this.aluguelFormData.idRentalPlans);
 
-      const standSelecionado = this.stands.find(s => s.idStands === idStands);
-      const clienteSelecionado = this.clientes.find(c => c.idCustomers === idCustomers);
-      const planoSelecionado = this.planosAluguel.find(p => p.idRentalPlans === idRentalPlans);
-
-      if (!standSelecionado) {
-        throw new Error('Stand não encontrado');
+      // Validações básicas
+      if (!idStands) {
+        throw new Error('Selecione um stand');
       }
-      if (!clienteSelecionado) {
-        throw new Error('Cliente não encontrado');
+      if (!idCustomers) {
+        throw new Error('Selecione um cliente');
       }
-      if (!planoSelecionado) {
-        throw new Error('Plano de aluguel não encontrado');
+      if (!idRentalPlans) {
+        throw new Error('Selecione um plano de aluguel');
       }
 
-      if (!this.aluguelFormData.startPeriodStandRentals) {
-        throw new Error('Data de início é obrigatória');
-      }
-
+      // CORREÇÃO: Enviar apenas IDs conforme esperado pelo backend
       const dadosAluguel = {
-        stand: standSelecionado,
-        customer: clienteSelecionado,
-        rentalPlan: planoSelecionado,
+        idStands: idStands,
+        idCustomers: idCustomers,
+        idRentalPlans: idRentalPlans,
         startPeriodStandRentals: this.aluguelFormData.startPeriodStandRentals,
-        endPeriodStandRentals: this.aluguelFormData.endPeriodStandRentals,
         totalPriceStandRentals: this.aluguelFormData.totalPriceStandRentals
       };
 
-      console.log('Enviando dados para o backend:', dadosAluguel);
+      console.log('Enviando dados para API:', dadosAluguel);
 
       const response = await this.http.post('http://localhost:8080/api/stand-rentals', dadosAluguel).toPromise();
 
@@ -579,14 +555,18 @@ export class StandsComponent implements OnInit {
 
     } catch (error: any) {
       console.error('Erro ao realizar aluguel:', error);
+      
+      // Log mais detalhado do erro
+      if (error.error) {
+        console.log('Detalhes do erro:', error.error);
+      }
+      
       const errorMessage = error.error?.message || error.message || 'Erro ao realizar aluguel';
       this.showNotification('error', errorMessage);
     } finally {
       this.salvandoAluguel = false;
     }
   }
-
-  // ========== MÉTODOS AUXILIARES ==========
 
   abrirModalCliente() {
     this.showNotification('info', 'Funcionalidade de cadastro de cliente será implementada em breve');
@@ -629,6 +609,17 @@ export class StandsComponent implements OnInit {
       const errorMessage = error.error?.message || error.message || 'Erro ao excluir stand';
       this.showNotification('error', errorMessage);
     }
+  }
+
+  formatarDataParaDisplay(data: Date): string {
+    const dia = data.getDate().toString().padStart(2, '0');
+    const mes = (data.getMonth() + 1).toString().padStart(2, '0');
+    const ano = data.getFullYear();
+    return `${dia}/${mes}/${ano}`;
+  }
+
+  formatarDataParaBackend(data: Date): string {
+    return data.toISOString().split('T')[0];
   }
 
   // ========== MÉTODOS DO CALENDÁRIO ==========
@@ -753,22 +744,95 @@ export class StandsComponent implements OnInit {
     return turnosOcupados;
   }
 
+  // ========== MÉTODOS DINÂMICOS PARA TURNOS ==========
+
   getCorTurno(turnoNome: string): string {
     const turno = this.turnos.find(t => t.nameRentalShifts === turnoNome);
 
-    if (!turno) return 'bg-secondary';
+    if (!turno) return 'bg-secondary text-white';
 
-    const cores: { [key: string]: string } = {
-      '1': 'bg-warning',
-      '2': 'bg-info',
-      '3': 'bg-primary',
-      'Manhã': 'bg-warning',
-      'Tarde': 'bg-info',
-      'Dia Todo': 'bg-primary',
-      'Noite': 'bg-dark'
-    };
+    return this.gerarCorPorId(turno.idRentalShifts);
+  }
 
-    return cores[turno.idRentalShifts.toString()] || cores[turnoNome] || 'bg-secondary';
+  private gerarCorPorId(idTurno: number): string {
+    const coresBootstrap = [
+      'bg-primary text-white',
+      'bg-success text-white',
+      'bg-info text-white',
+      'bg-warning text-dark',
+      'bg-danger text-white',
+      'bg-secondary text-white',
+      'bg-dark text-white',
+      'bg-light text-dark',
+      'bg-primary text-white',
+      'bg-success text-white',
+      'bg-info text-white',
+      'bg-warning text-dark',
+      'bg-danger text-white',
+      'bg-secondary text-white'
+    ];
+
+    const index = (idTurno - 1) % coresBootstrap.length;
+    return coresBootstrap[index];
+  }
+
+  getAbreviacaoTurno(turnoNome: string): string {
+    const turno = this.turnos.find(t => t.nameRentalShifts === turnoNome);
+
+    if (!turno) {
+      return this.gerarAbreviacao(turnoNome);
+    }
+
+    return this.gerarAbreviacao(turno.nameRentalShifts);
+  }
+
+  private gerarAbreviacao(nomeTurno: string): string {
+    if (!nomeTurno || nomeTurno.trim() === '') return '??';
+
+    const nomeLimpo = nomeTurno.trim();
+
+    const nomeSanitizado = nomeLimpo.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
+    const palavras = nomeSanitizado.split(' ').filter(palavra => palavra.length > 0);
+
+    if (palavras.length === 0) return '??';
+
+    if (palavras.length === 1) {
+      const palavra = palavras[0];
+      if (palavra.length >= 2) {
+        return palavra.substring(0, 2).toUpperCase();
+      } else {
+        return (palavra + palavra).toUpperCase();
+      }
+    } else {
+      const iniciais = palavras.map(palavra => palavra.charAt(0).toUpperCase());
+      return iniciais.slice(0, 3).join('');
+    }
+  }
+
+  getDescricaoTurno(turnoNome: string): string {
+    const turno = this.turnos.find(t => t.nameRentalShifts === turnoNome);
+
+    if (!turno) {
+      return turnoNome;
+    }
+
+    let descricao = turno.nameRentalShifts;
+
+    if (turno.startTimeRentalShifts && turno.endTimeRentalShifts) {
+      descricao += ` (${this.formatarHora(turno.startTimeRentalShifts)} às ${this.formatarHora(turno.endTimeRentalShifts)})`;
+    }
+
+    if (turno.descriptionRentalShifts) {
+      descricao += ` - ${turno.descriptionRentalShifts}`;
+    }
+
+    return descricao;
+  }
+
+  formatarHora(hora: string): string {
+    if (!hora) return '';
+
+    return hora.substring(0, 5);
   }
 
   ehHoje(data: Date): boolean {
@@ -818,29 +882,8 @@ export class StandsComponent implements OnInit {
   }
 
   getClasseTurno(turnoNome: string): string {
-    const baseClass = 'shift-badge ';
     const cor = this.getCorTurno(turnoNome);
-    return baseClass + cor;
-  }
-
-  getAbreviacaoTurno(turnoNome: string): string {
-    const turno = this.turnos.find(t => t.nameRentalShifts === turnoNome);
-
-    if (!turno) {
-      return turnoNome.charAt(0);
-    }
-
-    const palavras = turno.nameRentalShifts.split(' ');
-    if (palavras.length === 1) {
-      return turno.nameRentalShifts.charAt(0);
-    } else {
-      return palavras.map(palavra => palavra.charAt(0)).join('');
-    }
-  }
-
-  getDescricaoTurno(turnoNome: string): string {
-    const turno = this.turnos.find(t => t.nameRentalShifts === turnoNome);
-    return turno ? `${turno.nameRentalShifts} (${turno.startTimeRentalShifts} às ${turno.endTimeRentalShifts})` : turnoNome;
+    return cor;
   }
 
   getTurnosDoDia(data: Date): { nome: string, ocupado: boolean }[] {

@@ -1,11 +1,8 @@
 <!-- Notificações -->
 <div class="notifications-container">
-  <div *ngFor="let notification of notifications" 
-       class="notification" 
-       [class.success]="notification.type === 'success'"
-       [class.error]="notification.type === 'error'"
-       [class.info]="notification.type === 'info'"
-       [class.hiding]="!notification.visible">
+  <div *ngFor="let notification of notifications" class="notification" [class.success]="notification.type === 'success'"
+    [class.error]="notification.type === 'error'" [class.info]="notification.type === 'info'"
+    [class.hiding]="!notification.visible">
     <div class="notification-content">
       <div class="notification-message">
         {{ notification.message }}
@@ -52,9 +49,7 @@
     <!-- Grid de Stands -->
     <div class="row" *ngIf="!loading && stands.length > 0">
       <div class="col-lg-3 col-md-4 col-sm-6 mb-4" *ngFor="let stand of stands">
-
         <div class="stand-card">
-
           <!-- Header do Stand -->
           <div class="stand-header">
             <div class="stand-numero">
@@ -76,10 +71,9 @@
             </div>
           </div>
 
+          <!-- Ações do Stand -->
           <div class="stand-actions">
-            <button class="btn btn-success btn-sm btn-icon" 
-                    (click)="abrirModalAluguel(stand)" 
-                    title="Alugar stand">
+            <button class="btn btn-success btn-sm btn-icon" (click)="abrirModalAluguel(stand)" title="Alugar stand">
               Alugar
             </button>
 
@@ -122,7 +116,7 @@
   </div>
 </div>
 
-<!-- Modal de Cadastro/Edição de Stand -->
+<!-- Modal de Cadastro de Stand -->
 <div class="modal-backdrop fade show" *ngIf="abrirModalCadastroStand"></div>
 
 <div class="modal fade show d-block" *ngIf="abrirModalCadastroStand" tabindex="-1" role="dialog">
@@ -209,7 +203,7 @@
             </div>
           </div>
 
-          <!-- Informações do Stand Selecionado -->
+          <!-- Informações do Stand Selecionado (QUANDO CLICAR EM ALUGAR) -->
           <div class="mb-3" *ngIf="standSelecionadoAluguel">
             <label class="form-label">Stand Selecionado</label>
             <div class="alert alert-info">
@@ -266,13 +260,14 @@
             <div class="col-md-6 mb-3">
               <label for="dataInicio" class="form-label">Data de Início *</label>
               <input type="text" class="form-control" id="dataInicio" name="dataInicioDisplay"
-                [(ngModel)]="dataInicioDisplay" required appDateFormat (ngModelChange)="onDataInicioChange($event)"
-                placeholder="DD/MM/AAAA" #dataInicio="ngModel" maxlength="10">
+                [(ngModel)]="dataInicioDisplay" (input)="onDataInicioInput($event)" placeholder="DD/MM/AAAA"
+                #dataInicio="ngModel" maxlength="10">
               <div *ngIf="dataInicio.invalid && dataInicio.touched" class="text-danger">
                 <small *ngIf="dataInicio.errors?.['required']">Data de início é obrigatória</small>
                 <small>Formato deve ser DD/MM/AAAA</small>
               </div>
-              <div class="form-text">Digite a data no formato DD/MM/AAAA</div>
+              <div class="form-text">Digite a data no formato DD/MM/AAAA (as barras serão inseridas automaticamente)
+              </div>
             </div>
 
             <div class="col-md-6 mb-3">
@@ -282,23 +277,7 @@
               </div>
             </div>
           </div>
-
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Data de Término</label>
-              <div class="form-control-plaintext border rounded p-2 bg-light">
-                {{ dataTermino || 'Selecione um plano' }}
-              </div>
-            </div>
-
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Horário de Término</label>
-              <div class="form-control-plaintext border rounded p-2 bg-light">
-                {{ horarioFim || 'Selecione um plano' }}
-              </div>
-            </div>
-          </div>
-
+          
           <!-- Resumo do Aluguel -->
           <div class="alert alert-success" *ngIf="aluguelFormData.totalPriceStandRentals > 0">
             <div class="d-flex justify-content-between">
@@ -306,7 +285,6 @@
               <strong>R$ {{ aluguelFormData.totalPriceStandRentals }}</strong>
             </div>
           </div>
-
         </div>
 
         <!-- Footer do Modal -->
@@ -339,7 +317,6 @@
       </div>
 
       <div class="modal-body">
-        <!-- Seleção de Stand -->
         <div class="mb-4">
           <label for="standCalendarioSelect" class="form-label">Selecionar Stand</label>
           <select class="form-select" id="standCalendarioSelect" (change)="mudarStandCalendario($event)"
@@ -351,7 +328,6 @@
           </select>
         </div>
 
-        <!-- Loading do Calendário -->
         <div *ngIf="loadingCalendario" class="text-center py-3">
           <div class="spinner-border spinner-border-sm text-primary" role="status">
             <span class="visually-hidden">Carregando...</span>
@@ -359,9 +335,7 @@
           <small class="text-muted ms-2">Carregando agendamentos...</small>
         </div>
 
-        <!-- Calendário -->
         <div *ngIf="!loadingCalendario" class="calendar-container">
-          <!-- Controles do Mês -->
           <div class="calendar-header mb-3">
             <div class="row align-items-center">
               <div class="col">
@@ -380,80 +354,75 @@
             </div>
           </div>
 
-          <!-- Dias da Semana -->
-          <div class="calendar-weekdays row g-0 mb-2">
-            <div class="col text-center p-2 fw-bold text-muted" *ngFor="let dia of getDiasDaSemana()">
+          <div class="calendar-weekdays">
+            <div class="weekday-cell text-center p-2 fw-bold text-muted" *ngFor="let dia of getDiasDaSemana()">
               {{ dia }}
             </div>
           </div>
 
-          <!-- Dias do Mês -->
           <div class="calendar-days">
-            <div class="row g-0">
-              <div class="col p-1" *ngFor="let dia of getDiasDoMes(); let i = index">
-                <div class="calendar-day-cell h-100" 
-                     [class]="getDiaClass(dia)"
-                     [title]="getTooltipDia(dia)">
-                  
-                  <div *ngIf="dia; else emptyDay">
-                    <!-- Número do Dia -->
-                    <div class="day-number" [class.text-white]="ehHoje(dia)">
-                      {{ dia.getDate() }}
-                    </div>
+            <div class="day-cell p-1" *ngFor="let dia of getDiasDoMes(); let i = index">
+              <div class="calendar-day-cell h-100" [class]="getDiaClass(dia)" [title]="getTooltipDia(dia)">
 
-                    <!-- Turnos Ocupados -->
-                    <div class="day-shifts mt-1" *ngIf="getTurnosDoDia(dia).length > 0">
-                      <div *ngFor="let turno of getTurnosDoDia(dia)" 
-                           class="shift-indicator">
-                        <span class="badge {{ getClasseTurno(turno.nome) }}" 
-                              [title]="getTituloTurno(turno.nome)">
-                          {{ getAbreviacaoTurno(turno.nome) }}
-                        </span>
-                      </div>
-                    </div>
+                <div *ngIf="dia; else emptyDay">
+                  <div class="day-number">
+                    {{ dia.getDate() }}
+                  </div>
 
-                    <!-- Indicador visual rápido de status do dia -->
-                    <div class="day-status-indicator mt-1">
-                      <small *ngIf="estaDiaOcupado(dia)" class="text-danger">
-                        <i class="fas fa-times-circle"></i> Ocupado
-                      </small>
-                      <small *ngIf="!estaDiaOcupado(dia)" class="text-success">
-                        <i class="fas fa-check-circle"></i> Disponível
-                      </small>
+                  <div class="day-shifts mt-1" *ngIf="getTurnosDoDia(dia).length > 0">
+                    <div *ngFor="let turno of getTurnosDoDia(dia)" class="shift-indicator">
+                      <span class="badge {{ getClasseTurno(turno.nome) }} shift-badge"
+                        [title]="getTituloTurno(turno.nome)">
+                        {{ getAbreviacaoTurno(turno.nome) }}
+                      </span>
                     </div>
                   </div>
 
-                  <ng-template #emptyDay>
-                    <div class="empty-day h-100"></div>
-                  </ng-template>
-
+                  <div class="day-status-indicator mt-1">
+                    <small *ngIf="estaDiaOcupado(dia)" class="text-danger">
+                      <i class="fas fa-times-circle"></i> Ocupado
+                    </small>
+                    <small *ngIf="!estaDiaOcupado(dia)" class="text-success">
+                      <i class="fas fa-check-circle"></i> Disponível
+                    </small>
+                  </div>
                 </div>
+
+                <ng-template #emptyDay>
+                  <div class="empty-day h-100"></div>
+                </ng-template>
+
               </div>
             </div>
           </div>
 
-          <!-- Legenda Dinâmica dos Turnos -->
           <div class="calendar-legend mt-4 p-3 bg-light rounded">
             <div class="row">
               <div class="col-md-6">
-                <small class="fw-bold text-muted">Legenda dos Turnos:</small>
+                <small class="fw-bold text-muted">Legenda dos Turnos Ocupados:</small>
                 <div class="mt-2">
                   <div *ngFor="let turno of turnos" class="d-inline-block me-3 mb-2">
-                    <span class="badge {{ getCorTurno(turno.nameRentalShifts) }} me-1">
+                    <span class="badge {{ getCorTurno(turno.nameRentalShifts) }} shift-badge me-1"
+                      [title]="getDescricaoTurno(turno.nameRentalShifts)">
                       {{ getAbreviacaoTurno(turno.nameRentalShifts) }}
                     </span>
                     <small>= {{ turno.nameRentalShifts }}</small>
                     <br>
-                    <small class="text-muted">{{ turno.startTimeRentalShifts }} às {{ turno.endTimeRentalShifts }}</small>
+                    <small *ngIf="turno.startTimeRentalShifts && turno.endTimeRentalShifts" class="text-muted">
+                      {{ formatarHora(turno.startTimeRentalShifts) }} às {{ formatarHora(turno.endTimeRentalShifts) }}
+                    </small>
+                    <small *ngIf="!turno.startTimeRentalShifts || !turno.endTimeRentalShifts" class="text-muted">
+                      Horário não definido
+                    </small>
                   </div>
                 </div>
               </div>
               <div class="col-md-6">
-                <small class="fw-bold text-muted">Status:</small>
+                <small class="fw-bold text-muted">Status dos Dias:</small>
                 <div class="mt-2">
                   <div class="mb-1">
                     <span class="badge bg-success me-2">✓</span>
-                    <small>Dia Disponível (sem turnos marcados)</small>
+                    <small>Dia Disponível (sem turnos ocupados)</small>
                   </div>
                   <div class="mb-1">
                     <span class="badge bg-danger me-2">✗</span>

@@ -1,4 +1,4 @@
-/* Estilos para os stands */
+/* Estilos para os stands - IDÊNTICO AO DAS MESAS */
 .stand-card {
   border: 1px solid #e0e0e0;
   border-radius: 12px;
@@ -89,142 +89,7 @@
   }
 }
 
-/* Reutilizar os mesmos estilos do calendário das mesas */
-.calendar-day-cell {
-  border: 1px solid #dee2e6;
-  border-radius: 0.375rem;
-  min-height: 120px;
-  padding: 0.5rem;
-  transition: all 0.2s;
-  display: flex;
-  flex-direction: column;
-  
-  &.empty {
-    background-color: #f8f9fa;
-    border-color: #e9ecef;
-  }
-  
-  &:hover:not(.empty) {
-    background-color: #f8f9fa;
-    transform: translateY(-1px);
-  }
-  
-  &.today {
-    background-color: #007bff;
-    border-color: #0056b3;
-    color: white;
-    
-    .day-number {
-      color: white;
-      font-weight: bold;
-    }
-    
-    .day-status-indicator {
-      color: white !important;
-    }
-  }
-  
-  &.occupied {
-    background-color: #fff5f5;
-    border-color: #dc3545;
-  }
-  
-  &.available {
-    background-color: #f0fff4;
-    border-color: #28a745;
-  }
-}
-
-.day-number {
-  font-weight: bold;
-  font-size: 1rem;
-  margin-bottom: 0.25rem;
-  text-align: center;
-}
-
-.day-shifts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2px;
-  justify-content: center;
-  margin-bottom: 0.25rem;
-}
-
-.shift-indicator {
-  flex: 0 0 auto;
-}
-
-.shift-badge {
-  font-size: 0.6rem;
-  padding: 0.15rem 0.25rem;
-  display: block;
-  text-align: center;
-  min-width: 20px;
-  transition: all 0.2s;
-  font-weight: bold;
-}
-
-.day-status-indicator {
-  text-align: center;
-  font-size: 0.6rem;
-  
-  .text-success {
-    color: #198754 !important;
-  }
-  
-  .text-danger {
-    color: #dc3545 !important;
-  }
-}
-
-.empty-day {
-  background: transparent;
-}
-
-.calendar-legend {
-  .badge {
-    font-size: 0.75rem;
-    cursor: help;
-  }
-  
-  small {
-    font-size: 0.8rem;
-  }
-}
-
-/* Responsividade melhorada */
-@media (max-width: 768px) {
-  .calendar-day-cell {
-    min-height: 100px;
-    padding: 0.25rem;
-  }
-
-  .day-number {
-    font-size: 0.8rem;
-  }
-  
-  .shift-badge {
-    font-size: 0.5rem;
-    padding: 0.1rem 0.2rem;
-    min-width: 16px;
-  }
-  
-  .day-status-indicator {
-    font-size: 0.5rem;
-  }
-}
-
-@media (max-width: 576px) {
-  .calendar-day-cell {
-    min-height: 90px;
-  }
-  
-  .day-shifts {
-    gap: 1px;
-  }
-}
-
-/* Estilos para resumo */
+/* Estilos para o resumo */
 .stats-summary {
   display: flex;
   justify-content: space-around;
@@ -255,15 +120,6 @@
   }
 }
 
-/* Estilos para os modais */
-.modal-backdrop {
-  opacity: 0.5;
-}
-
-.modal {
-  background-color: rgba(0, 0, 0, 0.5);
-}
-
 .btn-icon {
   display: flex;
   align-items: center;
@@ -277,15 +133,19 @@
 }
 
 /* Notificações customizadas */
-.notification {
+.notifications-container {
   position: fixed;
   top: 20px;
   right: 20px;
   z-index: 9999;
+}
+
+.notification {
   min-width: 300px;
   max-width: 500px;
   border-radius: 8px;
   padding: 16px;
+  margin-bottom: 10px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   animation: slideInRight 0.3s ease-out;
   
@@ -342,17 +202,123 @@
   }
 }
 
-.notification.hiding {
-  animation: slideOutRight 0.3s ease-in;
+// Calendário - IDÊNTICO AO DAS MESAS
+.calendar-day-cell {
+  border: 1px solid #dee2e6;
+  border-radius: 0.375rem;
+  min-height: 120px;
+  padding: 0.5rem;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  background-color: white;
+  
+  &.empty {
+    background-color: #f8f9fa;
+    border-color: #e9ecef;
+  }
+  
+  &:hover:not(.empty) {
+    background-color: #f8f9fa;
+    transform: translateY(-1px);
+  }
+  
+  /* ESTILO APENAS PARA O DIA DE HOJE */
+  &.today {
+    background-color: #e3f2fd !important;
+    border-color: #2196f3 !important;
+    
+    .day-number {
+      color: #1565c0 !important;
+      font-weight: bold;
+    }
+    
+    .day-status-indicator {
+      color: #1565c0 !important;
+    }
+  }
+  
+  &.occupied {
+    background-color: #fff5f5;
+    border-color: #f5c6cb;
+  }
+  
+  &.available {
+    background-color: #f0fff4;
+    border-color: #c3e6cb;
+  }
 }
 
-@keyframes slideOutRight {
-  from {
-    transform: translateX(0);
-    opacity: 1;
+.day-number {
+  font-weight: bold;
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+  text-align: center;
+  color: #495057; 
+}
+
+.day-shifts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  justify-content: center;
+  margin-bottom: 0.25rem;
+}
+
+.shift-indicator {
+  flex: 0 0 auto;
+}
+
+.shift-badge {
+  font-size: 0.6rem;
+  padding: 0.15rem 0.25rem;
+  display: block;
+  text-align: center;
+  min-width: 20px;
+  transition: all 0.2s;
+  font-weight: bold;
+}
+
+.day-status-indicator {
+  text-align: center;
+  font-size: 0.6rem;
+  color: #6c757d;
+  
+  .text-success {
+    color: #198754;
   }
-  to {
-    transform: translateX(100%);
-    opacity: 0;
+  
+  .text-danger {
+    color: #dc3545;
   }
+}
+
+.empty-day {
+  background: transparent;
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  margin-bottom: 0.5rem;
+}
+
+.calendar-weekdays .col {
+  text-align: center;
+  padding: 0.5rem;
+  font-weight: bold;
+  color: #6c757d;
+  background-color: #f8f9fa;
+  border-radius: 0.25rem;
+}
+
+.calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+}
+
+.calendar-days .col {
+  min-height: 120px;
 }
