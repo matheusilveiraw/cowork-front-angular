@@ -505,48 +505,48 @@ export class MesasComponent implements OnInit {
     }
   }
 
-async salvarAluguel() {
-  if (this.salvandoAluguel) return;
+  async salvarAluguel() {
+    if (this.salvandoAluguel) return;
 
-  this.salvandoAluguel = true;
+    this.salvandoAluguel = true;
 
-  try {
-    const idDesks = this.mesaSelecionadaAluguel ?
-      this.mesaSelecionadaAluguel.idDesks :
-      Number(this.aluguelFormData.idDesks);
+    try {
+      const idDesks = this.mesaSelecionadaAluguel ?
+        this.mesaSelecionadaAluguel.idDesks :
+        Number(this.aluguelFormData.idDesks);
 
-    const dataInicioAPI = this.converterDataParaAPI(this.dataInicioDisplay);
-    
-    const startPeriodCompleto = `${dataInicioAPI}T${this.horarioInicio}`;
+      const dataInicioAPI = this.converterDataParaAPI(this.dataInicioDisplay);
 
-    const dadosAluguel = {
-      idDesks: idDesks,
-      idCustomers: Number(this.aluguelFormData.idCustomers),
-      idRentalPlans: Number(this.aluguelFormData.idRentalPlans),
-      startPeriodDeskRentals: startPeriodCompleto,
-      totalPriceDeskRentals: this.aluguelFormData.totalPriceDeskRentals
-    };
+      const startPeriodCompleto = `${dataInicioAPI}T${this.horarioInicio}`;
 
-    const response = await this.http.post('http://localhost:8080/api/desk-rentals', dadosAluguel).toPromise();
+      const dadosAluguel = {
+        idDesks: idDesks,
+        idCustomers: Number(this.aluguelFormData.idCustomers),
+        idRentalPlans: Number(this.aluguelFormData.idRentalPlans),
+        startPeriodDeskRentals: startPeriodCompleto,
+        totalPriceDeskRentals: this.aluguelFormData.totalPriceDeskRentals
+      };
 
-    const message = (response as any)?.message || 'Aluguel realizado com sucesso!';
-    this.showNotification('success', message);
+      const response = await this.http.post('http://localhost:8080/api/desk-rentals', dadosAluguel).toPromise();
 
-    this.fecharModalAluguel();
-    await this.buscarMesas();
+      const message = (response as any)?.message || 'Aluguel realizado com sucesso!';
+      this.showNotification('success', message);
 
-  } catch (error: any) {
-    console.error('Erro ao realizar aluguel:', error);
-    const errorMessage = error.error?.message || error.message || 'Erro ao realizar aluguel';
-    this.showNotification('error', errorMessage);
-  } finally {
-    this.salvandoAluguel = false;
+      this.fecharModalAluguel();
+      await this.buscarMesas();
+
+    } catch (error: any) {
+      console.error('Erro ao realizar aluguel:', error);
+      const errorMessage = error.error?.message || error.message || 'Erro ao realizar aluguel';
+      this.showNotification('error', errorMessage);
+    } finally {
+      this.salvandoAluguel = false;
+    }
   }
-}
 
   converterDataParaAPI(dataBR: string): string {
     if (!dataBR) return '';
-    
+
     const [dia, mes, ano] = dataBR.split('/');
     return `${ano}-${mes}-${dia}`;
   }
@@ -727,22 +727,96 @@ async salvarAluguel() {
     return turnosOcupados;
   }
 
+  // NO FINAL DO COMPONENT, SUBSTITUA OS MÉTODOS DE TURNO:
+
   getCorTurno(turnoNome: string): string {
     const turno = this.turnos.find(t => t.nameRentalShifts === turnoNome);
 
     if (!turno) return 'bg-secondary';
 
+    // Cores pré-definidas baseadas no ID ou nome do turno
     const cores: { [key: string]: string } = {
-      '1': 'bg-warning',
-      '2': 'bg-info',
-      '3': 'bg-primary',
-      'Manhã': 'bg-warning',
-      'Tarde': 'bg-info',
-      'Dia Todo': 'bg-primary',
-      'Noite': 'bg-dark'
+      '1': 'bg-warning text-dark',      // Manhã
+      '2': 'bg-info text-white',        // Tarde  
+      '3': 'bg-primary text-white',     // Dia Todo
+      '4': 'bg-dark text-white',        // Noite
+      '5': 'bg-success text-white',     // Madrugada
+      '6': 'bg-danger text-white',      // Integral
+      'Manhã': 'bg-warning text-dark',
+      'Tarde': 'bg-info text-white',
+      'Dia Todo': 'bg-primary text-white',
+      'Noite': 'bg-dark text-white',
+      'Madrugada': 'bg-success text-white',
+      'Integral': 'bg-danger text-white'
     };
 
-    return cores[turno.idRentalShifts.toString()] || cores[turnoNome] || 'bg-secondary';
+    // Se não encontrar pelo nome, usa o ID
+    return cores[turno.idRentalShifts.toString()] || cores[turnoNome] || this.gerarCorAleatoria(turnoNome);
+  }
+
+  // NOVO MÉTODO: Gerar cor aleatória baseada no nome do turno
+  private gerarCorAleatoria(turnoNome: string): string {
+    // Lista de cores Bootstrap para fallback
+    const coresBootstrap = [
+      'bg-primary text-white',
+      'bg-secondary text-white',
+      'bg-success text-white',
+      'bg-danger text-white',
+      'bg-warning text-dark',
+      'bg-info text-white',
+      'bg-dark text-white',
+      'bg-light text-dark'
+    ];
+
+    // Gera um índice baseado no nome do turno para ser consistente
+    let hash = 0;
+    for (let i = 0; i < turnoNome.length; i++) {
+      hash = turnoNome.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % coresBootstrap.length;
+
+    return coresBootstrap[index];
+  }
+
+  getAbreviacaoTurno(turnoNome: string): string {
+    const turno = this.turnos.find(t => t.nameRentalShifts === turnoNome);
+
+    if (!turno) {
+      // Fallback: pega as iniciais do nome fornecido
+      return this.gerarAbreviacao(turnoNome);
+    }
+
+    return this.gerarAbreviacao(turno.nameRentalShifts);
+  }
+
+  // NOVO MÉTODO: Gera abreviação inteligente
+  private gerarAbreviacao(nomeTurno: string): string {
+    if (!nomeTurno || nomeTurno.trim() === '') return '??';
+
+    const nomeLimpo = nomeTurno.trim();
+    const palavras = nomeLimpo.split(' ').filter(palavra => palavra.length > 0);
+
+    if (palavras.length === 0) return '??';
+
+    if (palavras.length === 1) {
+      // Uma palavra: pega primeira e segunda letra
+      const palavra = palavras[0];
+      if (palavra.length >= 2) {
+        return palavra.substring(0, 2).toUpperCase();
+      } else {
+        return (palavra + ' ').substring(0, 2).toUpperCase();
+      }
+    } else {
+      // Múltiplas palavras: pega primeira letra de cada
+      return palavras.map(palavra => palavra.charAt(0).toUpperCase()).join('');
+    }
+  }
+
+  getDescricaoTurno(turnoNome: string): string {
+    const turno = this.turnos.find(t => t.nameRentalShifts === turnoNome);
+    return turno ?
+      `${turno.nameRentalShifts} (${turno.startTimeRentalShifts} às ${turno.endTimeRentalShifts})` :
+      turnoNome;
   }
 
   ehHoje(data: Date): boolean {
@@ -795,26 +869,6 @@ async salvarAluguel() {
   getClasseTurno(turnoNome: string): string {
     const cor = this.getCorTurno(turnoNome);
     return cor;
-  }
-
-  getAbreviacaoTurno(turnoNome: string): string {
-    const turno = this.turnos.find(t => t.nameRentalShifts === turnoNome);
-
-    if (!turno) {
-      return turnoNome.charAt(0);
-    }
-
-    const palavras = turno.nameRentalShifts.split(' ');
-    if (palavras.length === 1) {
-      return turno.nameRentalShifts.charAt(0);
-    } else {
-      return palavras.map(palavra => palavra.charAt(0)).join('');
-    }
-  }
-
-  getDescricaoTurno(turnoNome: string): string {
-    const turno = this.turnos.find(t => t.nameRentalShifts === turnoNome);
-    return turno ? `${turno.nameRentalShifts} (${turno.startTimeRentalShifts} às ${turno.endTimeRentalShifts})` : turnoNome;
   }
 
   getTurnosDoDia(data: Date): { nome: string, ocupado: boolean }[] {

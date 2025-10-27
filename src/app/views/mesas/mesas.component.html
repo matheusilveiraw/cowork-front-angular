@@ -1,11 +1,8 @@
 <!-- Notificações -->
 <div class="notifications-container">
-  <div *ngFor="let notification of notifications" 
-       class="notification" 
-       [class.success]="notification.type === 'success'"
-       [class.error]="notification.type === 'error'"
-       [class.info]="notification.type === 'info'"
-       [class.hiding]="!notification.visible">
+  <div *ngFor="let notification of notifications" class="notification" [class.success]="notification.type === 'success'"
+    [class.error]="notification.type === 'error'" [class.info]="notification.type === 'info'"
+    [class.hiding]="!notification.visible">
     <div class="notification-content">
       <div class="notification-message">
         {{ notification.message }}
@@ -77,9 +74,7 @@
           <!-- Ações da Mesa -->
           <div class="mesa-actions">
             <!-- REMOVIDO: [disabled]="!estaDisponivel(mesa)" - botão sempre habilitado -->
-            <button class="btn btn-success btn-sm btn-icon" 
-                    (click)="abrirModalAluguel(mesa)" 
-                    title="Alugar mesa">
+            <button class="btn btn-success btn-sm btn-icon" (click)="abrirModalAluguel(mesa)" title="Alugar mesa">
               Alugar
             </button>
 
@@ -373,10 +368,8 @@
           <div class="calendar-days">
             <div class="row g-0">
               <div class="col p-1" *ngFor="let dia of getDiasDoMes(); let i = index">
-                <div class="calendar-day-cell h-100" 
-                     [class]="getDiaClass(dia)"
-                     [title]="getTooltipDia(dia)">
-                  
+                <div class="calendar-day-cell h-100" [class]="getDiaClass(dia)" [title]="getTooltipDia(dia)">
+
                   <div *ngIf="dia; else emptyDay">
                     <!-- Número do Dia -->
                     <div class="day-number" [class.text-white]="ehHoje(dia)">
@@ -385,10 +378,9 @@
 
                     <!-- APENAS TURNOS OCUPADOS (dias disponíveis ficam vazios) -->
                     <div class="day-shifts mt-1" *ngIf="getTurnosDoDia(dia).length > 0">
-                      <div *ngFor="let turno of getTurnosDoDia(dia)" 
-                           class="shift-indicator">
-                        <span class="badge {{ getClasseTurno(turno.nome) }} shift-badge" 
-                              [title]="getTituloTurno(turno.nome)">
+                      <div *ngFor="let turno of getTurnosDoDia(dia)" class="shift-indicator">
+                        <span class="badge {{ getClasseTurno(turno.nome) }} shift-badge"
+                          [title]="getTituloTurno(turno.nome)">
                           {{ getAbreviacaoTurno(turno.nome) }}
                         </span>
                       </div>
@@ -415,31 +407,43 @@
           </div>
 
           <!-- Legenda Dinâmica dos Turnos -->
+          <!-- Legenda Dinâmica dos Turnos -->
           <div class="calendar-legend mt-4 p-3 bg-light rounded">
             <div class="row">
               <div class="col-md-6">
-                <small class="fw-bold text-muted">Legenda dos Turnos:</small>
+                <small class="fw-bold text-muted">Legenda dos Turnos Ocupados:</small>
                 <div class="mt-2">
                   <div *ngFor="let turno of turnos" class="d-inline-block me-3 mb-2">
-                    <span class="badge {{ getCorTurno(turno.nameRentalShifts) }} shift-badge me-1">
+                    <span class="badge {{ getCorTurno(turno.nameRentalShifts) }} shift-badge me-1"
+                      [title]="getDescricaoTurno(turno.nameRentalShifts)">
                       {{ getAbreviacaoTurno(turno.nameRentalShifts) }}
                     </span>
                     <small>= {{ turno.nameRentalShifts }}</small>
                     <br>
-                    <small class="text-muted">{{ turno.startTimeRentalShifts }} às {{ turno.endTimeRentalShifts }}</small>
+                    <small class="text-muted">{{ turno.startTimeRentalShifts }} às {{ turno.endTimeRentalShifts
+                      }}</small>
+                  </div>
+
+                  <!-- Mensagem quando não há turnos -->
+                  <div *ngIf="turnos.length === 0" class="text-muted">
+                    <small>Nenhum turno cadastrado</small>
                   </div>
                 </div>
               </div>
               <div class="col-md-6">
-                <small class="fw-bold text-muted">Status:</small>
+                <small class="fw-bold text-muted">Status dos Dias:</small>
                 <div class="mt-2">
                   <div class="mb-1">
                     <span class="badge bg-success me-2">✓</span>
-                    <small>Dia Disponível (sem turnos marcados)</small>
+                    <small>Dia Disponível (sem turnos ocupados)</small>
                   </div>
                   <div class="mb-1">
                     <span class="badge bg-danger me-2">✗</span>
                     <small>Dia Ocupado (com turnos marcados)</small>
+                  </div>
+                  <div class="mb-1">
+                    <span class="badge bg-primary me-2">ℹ</span>
+                    <small>Legenda mostra apenas turnos ocupados</small>
                   </div>
                 </div>
               </div>
