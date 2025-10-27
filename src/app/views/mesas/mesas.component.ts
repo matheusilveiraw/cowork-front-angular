@@ -670,6 +670,7 @@ export class MesasComponent implements OnInit {
     const primeiroDia = new Date(year, month, 1);
     const ultimoDia = new Date(year, month + 1, 0);
 
+
     const diasVaziosInicio = primeiroDia.getDay();
 
     const dias: (Date | null)[] = [];
@@ -800,7 +801,6 @@ export class MesasComponent implements OnInit {
       return turnoNome;
     }
 
-    // Formata a descrição com horários, se disponíveis
     let descricao = turno.nameRentalShifts;
 
     if (turno.startTimeRentalShifts && turno.endTimeRentalShifts) {
@@ -814,10 +814,10 @@ export class MesasComponent implements OnInit {
     return descricao;
   }
 
-  private formatarHora(hora: string): string {
+  formatarHora(hora: string): string {
     if (!hora) return '';
 
-    return hora.substring(0, 5);
+    return hora.substring(0, 5); 
   }
 
   testarAbreviacoesDinamicas() {
@@ -879,7 +879,6 @@ export class MesasComponent implements OnInit {
     return tooltip.trim();
   }
 
-  // MÉTODO CORRIGIDO - APENAS ISSO FOI ALTERADO
   getClasseTurno(turnoNome: string): string {
     const cor = this.getCorTurno(turnoNome);
     return cor;

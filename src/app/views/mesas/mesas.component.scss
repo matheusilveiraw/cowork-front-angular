@@ -282,7 +282,7 @@
 .day-status-indicator {
   text-align: center;
   font-size: 0.6rem;
-  color: #6c757d; /* COR PADRÃO */
+  color: #6c757d;
   
   .text-success {
     color: #198754;
@@ -295,4 +295,30 @@
 
 .empty-day {
   background: transparent;
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  margin-bottom: 0.5rem;
+}
+
+.calendar-weekdays .col {
+  text-align: center;
+  padding: 0.5rem;
+  font-weight: bold;
+  color: #6c757d;
+  background-color: #f8f9fa;
+  border-radius: 0.25rem;
+}
+
+.calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+}
+
+.calendar-days .col {
+  min-height: 120px;
 }
