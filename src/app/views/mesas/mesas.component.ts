@@ -527,8 +527,6 @@ async salvarAluguel() {
       totalPriceDeskRentals: this.aluguelFormData.totalPriceDeskRentals
     };
 
-    console.log('Dados enviados para API:', dadosAluguel);
-
     const response = await this.http.post('http://localhost:8080/api/desk-rentals', dadosAluguel).toPromise();
 
     const message = (response as any)?.message || 'Aluguel realizado com sucesso!';
