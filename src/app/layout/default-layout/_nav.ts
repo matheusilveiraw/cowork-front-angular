@@ -5,10 +5,10 @@ export const navItems: INavData[] = [
     name: 'Dashboard',
     url: '/dashboard',
     iconComponent: { name: 'cil-speedometer' },
-    badge: {
-      color: 'info',
-      text: 'NEW'
-    }
+    // badge: {
+    //   color: 'info',
+    //   text: 'NEW'
+    // }
   },
   // {
   //   title: true,
@@ -21,23 +21,23 @@ export const navItems: INavData[] = [
   {
     name: 'Mesas',
     url: '/mesas',
-    iconComponent: { name: 'cil-desktop' }
+    iconComponent: { name: 'cilGrid' }
   },
   {
     name: 'Stands',
     url: '/stands',
-    iconComponent: { name: 'cil-desktop' }
+    iconComponent: { name: 'cilHome' }
   },
-  {
-    name: 'Salas',
-    url: '/theme/colors',
-    iconComponent: { name: 'cil-drop' }
-  },
-  {
-    name: 'Stands',
-    url: '/theme/colors',
-    iconComponent: { name: 'cil-drop' }
-  },
+  // {
+  //   name: 'Salas',
+  //   url: '/theme/colors',
+  //   iconComponent: { name: 'cil-drop' }
+  // },
+  // {
+  //   name: 'Stands',
+  //   url: '/theme/colors',
+  //   iconComponent: { name: 'cil-drop' }
+  // },
   {
     title: true,
     name: 'Cadastros'
